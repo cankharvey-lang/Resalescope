@@ -1,6 +1,5 @@
 """
 PriceScout — Python Backend
-Uses RapidAPI eBay Average Selling Price (POST request)
 """
 
 import os, requests
@@ -16,7 +15,7 @@ PORT         = int(os.getenv('PORT', 8080))
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'rapidapi': bool(RAPIDAPI_KEY)})
+    return jsonify({'status': 'ok'})
 
 
 @app.route('/')
@@ -54,34 +53,45 @@ def ebay_sold():
         r.raise_for_status()
         data = r.json()
 
+        # Debug: print raw response to logs
+        print('RapidAPI response:', str(data)[:500])
+
         raw_items = data.get('results', [])
+        if not isinstance(raw_items, list):
+            raw_items = []
+
         listings = []
         for i, item in enumerate(raw_items[:20]):
-            price_raw = item.get('sold_price', item.get('price', 0))
+            if not isinstance(item, dict):
+                continue
             try:
+                price_raw = item.get('sold_price') or item.get('price') or 0
                 price = float(str(price_raw).replace('£','').replace('$','').replace(',','').strip())
             except:
                 price = 0
             listings.append({
                 'id':        str(i),
-                'title':     item.get('title', query),
+                'title':     str(item.get('title', query)),
                 'price':     price,
                 'currency':  'GBP',
-                'condition': item.get('condition', 'Unknown'),
-                'soldDate':  item.get('end_date', item.get('date', '')),
-                'url':       item.get('url', item.get('itemUrl', f'https://www.ebay.co.uk/sch/i.html?_nkw={query}&LH_Sold=1')),
-                'imageUrl':  item.get('image', item.get('imageUrl', '')),
-                'location':  item.get('location', 'United Kingdom'),
+                'condition': str(item.get('condition', 'Unknown')),
+                'soldDate':  str(item.get('end_date') or item.get('date') or ''),
+                'url':       str(item.get('url') or item.get('itemUrl') or ''),
+                'imageUrl':  str(item.get('image') or item.get('imageUrl') or ''),
+                'location':  str(item.get('location') or 'United Kingdom'),
             })
 
         prices = sorted([l['price'] for l in listings if l['price'] > 0])
-        avg_raw = data.get('average_price', data.get('averagePrice', 0))
+
         try:
-            avg = float(str(avg_raw).replace('£','').replace('$','').replace(',','').strip())
+            avg = float(str(data.get('average_price') or data.get('averagePrice') or 0).replace('£','').replace('$','').replace(',',''))
         except:
             avg = round(sum(prices)/len(prices), 2) if prices else 0
 
-        total = int(data.get('total_results', data.get('totalResults', len(listings))))
+        try:
+            total = int(str(data.get('total_results') or data.get('totalResults') or len(listings)))
+        except:
+            total = len(listings)
 
         return jsonify({
             'query':     query,
