@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>PriceScout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --blue:#0064D2; --red:#E53238; --yellow:#F5AF02; --green:#86B817;
+  --profit:#1a9e52; --bg:#f0f2f5; --card:#ffffff;
+  --text:#0f1117; --text2:#6b7280; --border:#e5e7eb;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+  --radius:16px;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#0e0f13;--card:#1a1b21;--text:#f0f0f0;--text2:#8b8fa8;--border:#2a2b35;--shadow:0 1px 3px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);}
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);min-height:100vh;}
+body{font-family:'DM Sans',sans-serif;display:flex;justify-content:center;}
+#app{width:100%;max-width:420px;padding-bottom:32px;}
+
+/* ── Header ── */
+.hdr{
+  display:flex;align-items:center;gap:10px;
+  padding:16px 18px 14px;
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:20;
+}
+.logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1.5px;display:flex;}
+.logo span:nth-child(1){color:var(--red)}
+.logo span:nth-child(2){color:var(--blue)}
+.logo span:nth-child(3){color:var(--yellow)}
+.logo span:nth-child(4){color:var(--green)}
+.app-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-left:6px;}
+.tagline{margin-left:auto;font-size:11px;color:var(--text2);font-weight:500;}
+
+/* ── Scan card ── */
+.scan-wrap{margin:14px 14px 0;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);background:var(--card);}
+
+.vbox{
+  width:100%;height:220px;background:#080b14;
+  position:relative;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.vbox::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center, rgba(0,100,210,.15) 0%, transparent 70%);
+}
+#video{width:100%;height:100%;object-fit:cover;display:none;}
+#canvas-cap{display:none;}
+
+.cam-idle{display:flex;flex-direction:column;align-items:center;gap:10px;position:relative;z-index:1;}
+.cam-idle svg{opacity:.25;width:52px;height:52px;stroke:#fff;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.cam-idle span{font-size:12px;color:rgba(255,255,255,.3);font-weight:500;}
+
+.scan-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:2;}
+.scan-overlay.on{display:flex;}
+.sf{width:210px;height:135px;position:relative;}
+.sf-corner{position:absolute;width:22px;height:22px;border-color:rgba(255,255,255,.85);border-style:solid;}
+.sf-corner.tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.sf-corner.tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+.sf-corner.bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+.sf-corner.br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.scan-line{position:absolute;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);animation:scanAnim 2s ease-in-out infinite;top:50%;}
+@keyframes scanAnim{0%{transform:translateY(-50px);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateY(50px);opacity:0}}
+.scan-label{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap;font-weight:500;}
+
+#photo-prev{display:none;position:absolute;inset:0;z-index:2;}
+#prev-img{width:100%;height:100%;object-fit:contain;background:#080b14;}
+.cap-btn{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  width:58px;height:58px;border-radius:50%;
+  background:rgba(255,255,255,.95);border:none;
+  display:none;align-items:center;justify-content:center;
+  cursor:pointer;z-index:3;box-shadow:0 2px 16px rgba(0,0,0,.5);
+  transition:transform .1s;
+}
+.cap-btn:active{transform:translateX(-50%) scale(.93);}
+.cap-btn.on{display:flex;}
+.cap-btn svg{width:26px;height:26px;stroke:#111;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ── Mode buttons ── */
+.mode-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px;}
+.mbtn{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:11px 4px;border-radius:12px;
+  border:1.5px solid var(--border);background:var(--bg);
+  cursor:pointer;font-size:11px;font-weight:600;color:var(--text2);
+  font-family:'DM Sans',sans-serif;transition:all .15s;
+}
+.mbtn:hover{background:var(--card);}
+.mbtn.on{border-color:var(--blue);color:var(--blue);background:var(--card);}
+.mbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ── Search row ── */
+#file-inp{display:none;}
+.search-row{display:flex;gap:8px;padding:0 12px 12px;}
+.search-row input{
+  flex:1;padding:10px 14px;border-radius:10px;
+  border:1.5px solid var(--border);background:var(--bg);
+  color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color .15s;
+}
+.search-row input:focus{border-color:var(--blue);}
+.go-btn{
+  padding:10px 18px;border-radius:10px;
+  background:var(--blue);color:#fff;border:none;
+  font-size:13px;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:background .15s;
+  white-space:nowrap;
+}
+.go-btn:hover{background:#0053b3;}
+.go-btn:active{background:#004494;}
+
+/* ── Status ── */
+.status{
+  margin:0 14px 10px;padding:10px 14px;
+  border-radius:10px;font-size:13px;font-weight:500;
+  display:none;animation:fadeIn .2s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.status.info{background:#eff6ff;color:#1d4ed8;display:block;}
+.status.ok{background:#f0fdf4;color:#15803d;display:block;}
+.status.load{background:var(--bg);color:var(--text2);display:block;}
+.status.err{background:#fef2f2;color:#b91c1c;display:block;}
+@media(prefers-color-scheme:dark){
+  .status.info{background:#0f1f3d;color:#60a5fa;}
+  .status.ok{background:#0a1f12;color:#4ade80;}
+  .status.load{background:#1a1b21;color:#8b8fa8;}
+  .status.err{background:#1f0a0a;color:#f87171;}
+}
+
+/* ── Results ── */
+.results{padding:0 14px 0;display:none;}
+.results.on{display:block;animation:fadeIn .25s ease;}
+
+.prod-card{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:14px;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:10px;box-shadow:var(--shadow);
+}
+.prod-thumb{
+  width:64px;height:64px;border-radius:10px;flex-shrink:0;
+  border:1px solid var(--border);object-fit:contain;background:#fff;
+}
+.prod-thumb-ph{
+  width:64px;height:64px;border-radius:10px;flex-shrink:0;
+  border:1px solid var(--border);background:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+}
+.prod-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.4;margin-bottom:3px;color:var(--text);}
+.prod-meta{font-size:11px;color:var(--text2);font-weight:500;}
+
+/* ── Stats grid ── */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.stat{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);
+}
+.stat-lbl{font-size:11px;color:var(--text2);font-weight:500;margin-bottom:4px;}
+.stat-val{font-size:22px;font-weight:800;font-family:'Syne',sans-serif;color:var(--text);}
+.stat-val.g{color:var(--profit);}
+.stat-val.b{color:var(--blue);}
+.stat-sub{font-size:10px;color:var(--text2);margin-top:2px;font-weight:500;}
+
+/* ── Price range bar ── */
+.price-range{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);
+}
+.pr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.pr-label{font-size:12px;font-weight:600;color:var(--text);}
+.pr-avg-tag{font-size:11px;font-weight:600;color:var(--red);background:rgba(229,50,56,.1);padding:2px 8px;border-radius:20px;}
+.pr-track{height:10px;background:var(--border);border-radius:5px;position:relative;overflow:visible;margin-bottom:8px;}
+.pr-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--blue));width:100%;position:relative;}
+.pr-marker{position:absolute;top:-5px;width:4px;height:20px;background:var(--red);border-radius:2px;transform:translateX(-50%);}
+.pr-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);font-weight:500;}
+
+/* ── Listings ── */
+.sec-hd{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.listings-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;box-shadow:var(--shadow);}
+.listing{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .1s;
+}
+.listing:last-child{border-bottom:none;}
+.listing:hover{background:var(--bg);}
+.listing:active{background:var(--border);}
+.l-rank{font-size:11px;color:var(--text2);min-width:16px;text-align:center;font-weight:600;}
+.l-img{width:36px;height:36px;border-radius:6px;object-fit:contain;border:1px solid var(--border);background:#fff;flex-shrink:0;}
+.l-img-ph{width:36px;height:36px;border-radius:6px;background:var(--bg);border:1px solid var(--border);flex-shrink:0;}
+.l-info{flex:1;min-width:0;}
+.l-title{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;color:var(--text);font-weight:500;}
+.l-date{font-size:11px;color:var(--text2);}
+.l-cond{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--bg);color:var(--text2);white-space:nowrap;border:1px solid var(--border);font-weight:500;}
+.l-price{font-size:15px;font-weight:800;color:var(--profit);font-family:'Syne',sans-serif;}
+
+/* ── eBay link ── */
+.ebay-link{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px;border-radius:12px;
+  border:2px solid var(--blue);color:var(--blue);
+  font-size:13px;font-weight:700;cursor:pointer;
+  background:transparent;width:100%;font-family:'DM Sans',sans-serif;
+  text-decoration:none;transition:all .15s;margin-bottom:4px;
+}
+.ebay-link:hover{background:var(--blue);color:#fff;}
+.ebay-link svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="hdr">
+    <div class="logo"><span>e</span><span>b</span><span>a</span><span>y</span></div>
+    <span class="app-name">PriceScout</span>
+    <span class="tagline">Sold listings</span>
+  </header>
+
+  <div class="scan-wrap">
+    <div class="vbox">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas-cap"></canvas>
+
+      <div class="cam-idle" id="cam-idle">
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="3" height="14"/><rect x="7" y="5" width="1.5" height="14"/><rect x="10.5" y="5" width="2.5" height="14"/><rect x="15" y="5" width="1.5" height="14"/><rect x="18.5" y="5" width="3" height="14"/></svg>
+        <span>Tap a button below to start</span>
+      </div>
+
+      <div class="scan-overlay" id="soverlay">
+        <div class="sf">
+          <div class="sf-corner tl"></div><div class="sf-corner tr"></div>
+          <div class="sf-corner bl"></div><div class="sf-corner br"></div>
+          <div class="scan-line"></div>
+          <div class="scan-label">Align barcode within frame</div>
+        </div>
+      </div>
+
+      <div id="photo-prev"><img id="prev-img" alt=""/></div>
+      <button class="cap-btn" id="cap-btn" onclick="capturePhoto()">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </button>
+    </div>
+
+    <div class="mode-row">
+      <button class="mbtn" id="bb" onclick="startBarcode()">
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="3" height="14"/><rect x="7" y="5" width="1.5" height="14"/><rect x="10.5" y="5" width="2.5" height="14"/><rect x="15" y="5" width="1.5" height="14"/><rect x="18.5" y="5" width="3" height="14"/></svg>
+        Scan barcode
+      </button>
+      <button class="mbtn" id="pb" onclick="startPhoto()">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Take photo
+      </button>
+      <button class="mbtn" id="ub" onclick="document.getElementById('file-inp').click()">
+        <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        Upload image
+      </button>
+    </div>
+    <input type="file" id="file-inp" accept="image/*" onchange="handleUpload(event)"/>
+    <div class="search-row">
+      <input type="text" id="q" placeholder="Product name or barcode number…"/>
+      <button class="go-btn" onclick="doSearch()">Search</button>
+    </div>
+  </div>
+
+  <div style="height:12px"></div>
+  <div class="status" id="status"></div>
+
+  <div class="results" id="results">
+    <div class="prod-card" id="prod-card"></div>
+    <div class="stats" id="stats"></div>
+    <div class="price-range" id="price-range"></div>
+    <div class="sec-hd">Recent sold listings</div>
+    <div class="listings-wrap" id="listings"></div>
+    <a class="ebay-link" id="ebay-link" href="#" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      View all sold listings on eBay
+    </a>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────
+// Change this to your deployed server URL when hosting online
+const API = window.location.origin;
+
+// ── State ───────────────────────────────────────────────────────────────────
+let stream = null, codeReader = null;
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const fx = (n, c) => (c === 'USD' ? '$' : c === 'EUR' ? '€' : '£') + Number(n).toFixed(2);
+
+function setStatus(msg, type) {
+  const el = $('status');
+  el.className = 'status ' + type;
+  el.textContent = msg;
+}
+function clearStatus() { $('status').className = 'status'; }
+
+function timeAgo(str) {
+  if (!str) return '';
+  const d = Math.floor((Date.now() - new Date(str)) / 86400000);
+  return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d} days ago`;
+}
+
+// ── Camera ──────────────────────────────────────────────────────────────────
+async function stopAll() {
+  if (stream)      { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  if (codeReader)  { try { codeReader.reset(); } catch(_){} codeReader = null; }
+  $('video').style.display = 'none';
+  $('cam-idle').style.display = 'flex';
+  $('soverlay').classList.remove('on');
+  $('photo-prev').style.display = 'none';
+  $('cap-btn').classList.remove('on');
+  ['bb','pb','ub'].forEach(id => $(id).classList.remove('on'));
+}
+
+async function startBarcode() {
+  await stopAll();
+  $('bb').classList.add('on');
+  $('cam-idle').style.display = 'none';
+  $('soverlay').classList.add('on');
+  setStatus('Align barcode in the frame…', 'info');
+  try {
+    if (!window.ZXing) throw new Error('ZXing not loaded');
+    codeReader = new ZXing.BrowserMultiFormatReader();
+    const devs  = await ZXing.BrowserCodeReader.listVideoInputDevices();
+    const devId = devs.length > 1 ? devs[devs.length - 1].deviceId : undefined;
+    codeReader.decodeFromVideoDevice(devId, 'video', async (result, err) => {
+      $('video').style.display = 'block';
+      if (result) {
+        const code = result.getText();
+        $('q').value = code;
+        setStatus('Barcode detected: ' + code, 'ok');
+        try { codeReader.reset(); } catch(_){} codeReader = null;
+        await lookupBarcode(code);
+      }
+    });
+  } catch(e) {
+    setStatus('Camera unavailable — type a barcode below instead', 'info');
+    $('cam-idle').style.display = 'flex';
+    $('soverlay').classList.remove('on');
+  }
+}
+
+async function startPhoto() {
+  await stopAll();
+  $('pb').classList.add('on');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const v = $('video'); v.srcObject = stream; v.style.display = 'block';
+    $('cam-idle').style.display = 'none';
+    $('cap-btn').classList.add('on');
+    setStatus('Tap the camera button to capture', 'info');
+  } catch(e) {
+    setStatus('Camera unavailable — use Upload instead', 'info');
+  }
+}
+
+function capturePhoto() {
+  const v = $('video'), c = $('canvas-cap');
+  c.width = v.videoWidth || 640; c.height = v.videoHeight || 480;
+  c.getContext('2d').drawImage(v, 0, 0);
+  const url = c.toDataURL('image/jpeg', .85);
+  stopAll();
+  $('photo-prev').style.display = 'block';
+  $('prev-img').src = url;
+  // No AI — just prompt user to confirm product name
+  setStatus('Photo captured! Type the product name below and tap Search', 'info');
+}
+
+function handleUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const fr = new FileReader();
+  fr.onload = ev => {
+    stopAll();
+    $('photo-prev').style.display = 'block';
+    $('prev-img').src = ev.target.result;
+    setStatus('Image loaded! Type the product name below and tap Search', 'info');
+  };
+  fr.readAsDataURL(file);
+}
+
+// ── Barcode lookup ──────────────────────────────────────────────────────────
+async function lookupBarcode(code) {
+  setStatus('Looking up barcode…', 'load');
+  try {
+    const r    = await fetch(`${API}/api/barcode/${encodeURIComponent(code)}`);
+    const data = await r.json();
+    const name = data.name || code;
+    $('q').value = name;
+    if (data.source !== 'raw') {
+      setStatus('Found: ' + name, 'ok');
+      fetchSold(name, data.category || 'General');
+    } else {
+      setStatus('Barcode not found — confirm product name below and tap Search', 'info');
+    }
+  } catch(e) {
+    setStatus('Lookup failed — type product name manually', 'info');
+  }
+}
+
+// ── Search ──────────────────────────────────────────────────────────────────
+function doSearch() {
+  const q = $('q').value.trim();
+  if (!q) { setStatus('Enter a product name or barcode', 'info'); return; }
+  setStatus('Searching eBay sold listings…', 'load');
+  fetchSold(q, 'General');
+}
+
+// ── eBay API ─────────────────────────────────────────────────────────────────
+async function fetchSold(query, category) {
+  try {
+    const r    = await fetch(`${API}/api/ebay/sold?q=${encodeURIComponent(query)}&limit=20`);
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    renderResults(data, query, category);
+  } catch(e) {
+    setStatus('eBay lookup failed: ' + e.message, 'err');
+  }
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderResults(data, query, category) {
+  const { stats, listings, totalSold } = data;
+  const cur = listings[0]?.currency || 'GBP';
+  const img = listings.find(l => l.imageUrl)?.imageUrl || '';
+
+  // Product card
+  $('prod-card').innerHTML = `
+    ${img
+      ? `<img class="prod-thumb" src="${img}" alt="product" onerror="this.style.display='none'">`
+      : `<div class="prod-thumb-ph">🏷️</div>`}
+    <div>
+      <div class="prod-name">${query}</div>
+      <div class="prod-meta">${category} &middot; ${totalSold} sold in last 30 days</div>
+    </div>`;
+
+  // Stats
+  $('stats').innerHTML = `
+    <div class="stat"><div class="stat-lbl">Avg sold price</div><div class="stat-val g">${fx(stats.avg,cur)}</div><div class="stat-sub">last 30 days</div></div>
+    <div class="stat"><div class="stat-lbl">Units sold</div><div class="stat-val b">${totalSold}</div><div class="stat-sub">last 30 days</div></div>
+    <div class="stat"><div class="stat-lbl">Lowest sold</div><div class="stat-val">${fx(stats.low,cur)}</div><div class="stat-sub">recent</div></div>
+    <div class="stat"><div class="stat-lbl">Highest sold</div><div class="stat-val">${fx(stats.high,cur)}</div><div class="stat-sub">recent</div></div>`;
+
+  // Price range bar
+  const pct = stats.high > stats.low
+    ? ((stats.avg - stats.low) / (stats.high - stats.low) * 100).toFixed(1) : 50;
+  $('price-range').innerHTML = `
+    <div class="pr-top">
+      <span class="pr-label">Price range</span>
+      <span class="pr-avg-tag">avg ${fx(stats.avg,cur)}</span>
+    </div>
+    <div class="pr-track"><div class="pr-fill"><div class="pr-marker" style="left:${pct}%"></div></div></div>
+    <div class="pr-ends"><span>${fx(stats.low,cur)}</span><span>${fx(stats.high,cur)}</span></div>`;
+
+  // Listings
+  $('listings').innerHTML = listings.slice(0, 12).map((l, i) => `
+    <div class="listing" onclick="window.open('${l.url}','_blank')">
+      <span class="l-rank">${i+1}</span>
+      ${l.imageUrl
+        ? `<img class="l-img" src="${l.imageUrl}" alt="" onerror="this.style.display='none'">`
+        : `<div class="l-img-ph"></div>`}
+      <div class="l-info">
+        <div class="l-title">${l.title}</div>
+        <div class="l-date">${timeAgo(l.soldDate)}${l.location ? ' &middot; ' + l.location : ''}</div>
+      </div>
+      <span class="l-cond">${l.condition}</span>
+      <span class="l-price">${fx(l.price, l.currency)}</span>
+    </div>`).join('');
+
+  $('ebay-link').href = `https://www.ebay.co.uk/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
+  $('results').classList.add('on');
+  clearStatus();
+  $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Enter key on search ──────────────────────────────────────────────────────
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+</script>
+</body>
+</html>
