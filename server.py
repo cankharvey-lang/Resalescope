@@ -1,9 +1,9 @@
 """
 PriceScout — Python Backend
-Uses RapidAPI eBay Average Selling Price API
+Uses RapidAPI eBay Average Selling Price (POST request)
 """
 
-import os, json, requests
+import os, requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
@@ -32,46 +32,56 @@ def ebay_sold():
 
     headers = {
         'x-rapidapi-key':  RAPIDAPI_KEY,
-        'x-rapidapi-host': 'ebay-average-selling-price.p.rapidapi.com'
+        'x-rapidapi-host': 'ebay-average-selling-price.p.rapidapi.com',
+        'Content-Type':    'application/json'
     }
 
-    params = {
-        'keywords':    query,
-        'excluded_keywords': '',
-        'max_search_results': '240',
-        'aspects':     '',
-        'site_id':     '3',   # 3 = eBay UK
-        'remove_outliers': '1',
+    payload = {
+        'keywords':            query,
+        'excluded_keywords':   '',
+        'max_search_results':  '240',
+        'aspects':             [],
+        'site_id':             '3',
+        'remove_outliers':     '1',
         'spelling_correction': '1',
     }
 
     try:
-        r = requests.get(
+        r = requests.post(
             'https://ebay-average-selling-price.p.rapidapi.com/findCompletedItems',
-            headers=headers, params=params, timeout=15
+            headers=headers, json=payload, timeout=15
         )
         r.raise_for_status()
         data = r.json()
 
-        # Build listings from results
-        listings = []
         raw_items = data.get('results', [])
+        listings = []
         for i, item in enumerate(raw_items[:20]):
+            price_raw = item.get('sold_price', item.get('price', 0))
+            try:
+                price = float(str(price_raw).replace('£','').replace('$','').replace(',','').strip())
+            except:
+                price = 0
             listings.append({
                 'id':        str(i),
                 'title':     item.get('title', query),
-                'price':     float(item.get('sold_price', 0)),
+                'price':     price,
                 'currency':  'GBP',
                 'condition': item.get('condition', 'Unknown'),
-                'soldDate':  item.get('end_date', ''),
-                'url':       item.get('url', f'https://www.ebay.co.uk/sch/i.html?_nkw={query}&LH_Sold=1'),
-                'imageUrl':  item.get('image', ''),
+                'soldDate':  item.get('end_date', item.get('date', '')),
+                'url':       item.get('url', item.get('itemUrl', f'https://www.ebay.co.uk/sch/i.html?_nkw={query}&LH_Sold=1')),
+                'imageUrl':  item.get('image', item.get('imageUrl', '')),
                 'location':  item.get('location', 'United Kingdom'),
             })
 
         prices = sorted([l['price'] for l in listings if l['price'] > 0])
-        avg    = float(data.get('average_price', round(sum(prices)/len(prices), 2) if prices else 0))
-        total  = int(data.get('total_results', len(listings)))
+        avg_raw = data.get('average_price', data.get('averagePrice', 0))
+        try:
+            avg = float(str(avg_raw).replace('£','').replace('$','').replace(',','').strip())
+        except:
+            avg = round(sum(prices)/len(prices), 2) if prices else 0
+
+        total = int(data.get('total_results', data.get('totalResults', len(listings))))
 
         return jsonify({
             'query':     query,
