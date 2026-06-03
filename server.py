@@ -113,29 +113,33 @@ def identify():
     mime_raw    = image.split(';')[0].split(':')[1] if ';' in image else 'image/jpeg'
     media_type  = mime_raw if mime_raw in ('image/jpeg','image/png','image/webp','image/gif') else 'image/jpeg'
     try:
-        r = requests.post(
-            'https://api.anthropic.com/v1/messages',
-            json={
-                'model': 'claude-3-5-sonnet-20241022',
-                'max_tokens': 200,
-                'messages': [{
-                    'role': 'user',
-                    'content': [
-                        {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': base64_data}},
-                        {'type': 'text', 'text': 'Identify this product for eBay search. Reply ONLY with JSON: {"name":"brand model spec","category":"category"}'}
-                    ]
-                }]
-            },
-            headers={'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01'},
-            timeout=30
-        )
+        payload = {
+            'model': 'claude-3-5-sonnet-20241022',
+            'max_tokens': 200,
+            'messages': [{
+                'role': 'user',
+                'content': [
+                    {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': base64_data}},
+                    {'type': 'text', 'text': 'Identify this product for eBay search. Reply ONLY with valid JSON no markdown: {"name":"brand model spec","category":"category"}'}
+                ]
+            }]
+        }
+        headers = {
+            'x-api-key': ANTHROPIC_KEY,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json'
+        }
+        print(f'Calling Anthropic with key starting: {ANTHROPIC_KEY[:20]}')
+        r = requests.post('https://api.anthropic.com/v1/messages', json=payload, headers=headers, timeout=30)
+        print(f'Anthropic status: {r.status_code}')
+        print(f'Anthropic response: {r.text[:200]}')
         r.raise_for_status()
         text   = ''.join(c.get('text','') for c in r.json().get('content', []))
         parsed = json.loads(text.replace('```json','').replace('```','').strip())
         return jsonify(parsed)
     except Exception as e:
         print(f'AI identify error: {e}')
-        return jsonify({'error': 'AI identification failed'}), 502
+        return jsonify({'error': 'AI identification failed: ' + str(e)}), 502
 @app.route('/api/barcode/<code>')
 def barcode(code):
     try:
