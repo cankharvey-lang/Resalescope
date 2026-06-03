@@ -327,11 +327,8 @@ async function stopAll() {
 async function startBarcode() {
   await stopAll();
   $('bb').classList.add('on');
-  const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = 'image/*';
-  inp.capture = 'environment';
-  inp.onchange = async (e) => {
+  document.getElementById('file-inp').setAttribute('capture','environment');
+  document.getElementById('file-inp').onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setStatus('Reading barcode…', 'load');
@@ -344,33 +341,22 @@ async function startBarcode() {
           try {
             const c = document.createElement('canvas');
             c.width = img.width; c.height = img.height;
-            c.getContext('2d').drawImage(img, 0, 0);
+            c.getContext('2d').drawImage(img,0,0);
             const reader = new ZXing.BrowserMultiFormatReader();
             const result = await reader.decodeFromCanvas(c);
-            const code = result.getText();
-            $('q').value = code;
-            setStatus('Barcode detected: ' + code, 'ok');
-            await lookupBarcode(code);
+            $('q').value = result.getText();
+            setStatus('Barcode: ' + result.getText(), 'ok');
+            await lookupBarcode(result.getText());
           } catch(err) {
-            setStatus('Could not read barcode — type product name below', 'info');
+            setStatus('Barcode not read — type product name below', 'info');
           }
         };
         img.src = ev.target.result;
-      } catch(e) {
-        setStatus('Type the product name below and tap Search', 'info');
-      }
+      } catch(e) { setStatus('Type product name below', 'info'); }
     };
     fr.readAsDataURL(file);
   };
-  inp.click();
-}
-      }
-    });
-  } catch(e) {
-    setStatus('Camera unavailable — type a barcode below instead', 'info');
-    $('cam-idle').style.display = 'flex';
-    $('soverlay').classList.remove('on');
-  }
+  document.getElementById('file-inp').click();
 }
 
 async function startPhoto() {
@@ -387,16 +373,22 @@ async function startPhoto() {
   }
 }
 
-function capturePhoto() {
-  const v = $('video'), c = $('canvas-cap');
-  c.width = v.videoWidth || 640; c.height = v.videoHeight || 480;
-  c.getContext('2d').drawImage(v, 0, 0);
-  const url = c.toDataURL('image/jpeg', .85);
-  stopAll();
-  $('photo-prev').style.display = 'block';
-  $('prev-img').src = url;
-  // No AI — just prompt user to confirm product name
-  setStatus('Photo captured! Type the product name below and tap Search', 'info');
+async function startPhoto() {
+  await stopAll();
+  $('pb').classList.add('on');
+  document.getElementById('file-inp').removeAttribute('capture');
+  document.getElementById('file-inp').onchange = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const fr = new FileReader();
+    fr.onload = ev => {
+      stopAll();
+      showPreview(ev.target.result);
+      setStatus('Photo loaded! Type product name below and tap Search', 'info');
+    };
+    fr.readAsDataURL(file);
+  };
+  document.getElementById('file-inp').click();
+}
 }
 
 function handleUpload(e) {
