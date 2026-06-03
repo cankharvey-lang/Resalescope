@@ -149,6 +149,9 @@ body{font-family:'DM Sans',sans-serif;display:flex;justify-content:center;}
       </button>
     </div>
 
+    <!-- Hidden div required by html5-qrcode library -->
+    <div id="barcode-reader-div" style="display:none"></div>
+
     <!-- Three separate hidden inputs for each mode -->
     <input type="file" id="inp-barcode" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodeCapture(event)"/>
     <input type="file" id="inp-photo"   accept="image/*" capture="environment" style="display:none" onchange="handlePhotoCapture(event)"/>
@@ -177,7 +180,7 @@ body{font-family:'DM Sans',sans-serif;display:flex;justify-content:center;}
 
 </div>
 
-<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 const API = 'https://compassionate-patience-production-4d82.up.railway.app';
 
@@ -219,32 +222,24 @@ async function handleBarcodeCapture(e) {
   if (!file) return;
   e.target.value = '';
   setStatus('Reading barcode…', 'load');
-  const fr = new FileReader();
-  fr.onload = async ev => {
-    showPreview(ev.target.result);
-    try {
-      const img = new Image();
-      img.onload = async () => {
-        try {
-          const c = document.createElement('canvas');
-          c.width = img.width; c.height = img.height;
-          c.getContext('2d').drawImage(img, 0, 0);
-          const reader = new ZXing.BrowserMultiFormatReader();
-          const result = await reader.decodeFromCanvas(c);
-          const code = result.getText();
-          $('q').value = code;
-          setStatus('Barcode detected: ' + code, 'ok');
-          await lookupBarcode(code);
-        } catch(err) {
-          setStatus('Barcode not read — type product name below and tap Search', 'info');
-        }
-      };
-      img.src = ev.target.result;
-    } catch(err) {
-      setStatus('Type product name below and tap Search', 'info');
-    }
-  };
-  fr.readAsDataURL(file);
+  try {
+    const html5QrCode = new Html5Qrcode('barcode-reader-div');
+    const result = await html5QrCode.scanFileV2(file, false);
+    const code = result.decodedText;
+    // Show image preview
+    const fr = new FileReader();
+    fr.onload = ev => showPreview(ev.target.result);
+    fr.readAsDataURL(file);
+    $('q').value = code;
+    setStatus('Barcode detected: ' + code, 'ok');
+    await lookupBarcode(code);
+  } catch(err) {
+    // Show image anyway
+    const fr = new FileReader();
+    fr.onload = ev => showPreview(ev.target.result);
+    fr.readAsDataURL(file);
+    setStatus('Barcode not read — type product name below and tap Search', 'info');
+  }
 }
 
 // ── Photo: open camera, snap photo, show preview ─────────────────────────────
