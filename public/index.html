@@ -327,22 +327,43 @@ async function stopAll() {
 async function startBarcode() {
   await stopAll();
   $('bb').classList.add('on');
-  $('cam-idle').style.display = 'none';
-  $('soverlay').classList.add('on');
-  setStatus('Align barcode in the frame…', 'info');
-  try {
-    if (!window.ZXing) throw new Error('ZXing not loaded');
-    codeReader = new ZXing.BrowserMultiFormatReader();
-    const devs  = await ZXing.BrowserCodeReader.listVideoInputDevices();
-    const devId = devs.length > 1 ? devs[devs.length - 1].deviceId : undefined;
-    codeReader.decodeFromVideoDevice(devId, 'video', async (result, err) => {
-      $('video').style.display = 'block';
-      if (result) {
-        const code = result.getText();
-        $('q').value = code;
-        setStatus('Barcode detected: ' + code, 'ok');
-        try { codeReader.reset(); } catch(_){} codeReader = null;
-        await lookupBarcode(code);
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.capture = 'environment';
+  inp.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setStatus('Reading barcode…', 'load');
+    const fr = new FileReader();
+    fr.onload = async ev => {
+      showPreview(ev.target.result);
+      try {
+        const img = new Image();
+        img.onload = async () => {
+          try {
+            const c = document.createElement('canvas');
+            c.width = img.width; c.height = img.height;
+            c.getContext('2d').drawImage(img, 0, 0);
+            const reader = new ZXing.BrowserMultiFormatReader();
+            const result = await reader.decodeFromCanvas(c);
+            const code = result.getText();
+            $('q').value = code;
+            setStatus('Barcode detected: ' + code, 'ok');
+            await lookupBarcode(code);
+          } catch(err) {
+            setStatus('Could not read barcode — type product name below', 'info');
+          }
+        };
+        img.src = ev.target.result;
+      } catch(e) {
+        setStatus('Type the product name below and tap Search', 'info');
+      }
+    };
+    fr.readAsDataURL(file);
+  };
+  inp.click();
+}
       }
     });
   } catch(e) {
