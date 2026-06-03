@@ -11,7 +11,8 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder='public')
 CORS(app)
 
-RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', 'ad18cc42aamshcf9a7059a2cf7b0p1a5cc2jsn47199c0efcc3')
+RAPIDAPI_KEY  = os.getenv('RAPIDAPI_KEY', 'ad18cc42aamshcf9a7059a2cf7b0p1a5cc2jsn47199c0efcc3')
+ANTHROPIC_KEY = os.getenv('ANTHROPIC_KEY', '')
 PORT         = int(os.getenv('PORT', 8080))
 
 
@@ -24,7 +25,7 @@ def parse_price(val):
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok'})
+    return jsonify({'status': 'ok', 'anthropic': bool(ANTHROPIC_KEY), 'rapidapi': bool(RAPIDAPI_KEY)})
 
 
 @app.route('/')
@@ -130,7 +131,7 @@ def identify():
     if not image:
         return jsonify({'error': 'image required'}), 400
 
-    ANTHROPIC_KEY = os.getenv('ANTHROPIC_KEY', '')
+
     if not ANTHROPIC_KEY:
         return jsonify({'error': 'AI not configured'}), 500
 
