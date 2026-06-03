@@ -320,8 +320,6 @@ const firebaseConfig = {
 };
 
 // ── Anthropic API key (add yours here when ready) ─────────────────────────────
-const ANTHROPIC_KEY = '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';
-
 const API = 'https://compassionate-patience-production-4d82.up.railway.app';
 
 firebase.initializeApp(firebaseConfig);
@@ -448,7 +446,6 @@ function startPhoto(){resetButtons();$('pb').classList.add('on');$('inp-photo').
 function triggerUpload(){resetButtons();$('ub').classList.add('on');$('inp-upload').click();}
 
 function startAIPhoto() {
-  if (!ANTHROPIC_KEY) { showProModal(); return; }
   resetButtons(); $('aib').classList.add('on'); $('inp-ai').click();
 }
 
@@ -484,24 +481,18 @@ async function handleAIPhoto(e) {
   const fr=new FileReader();
   fr.onload=async ev=>{
     showPreview(ev.target.result);
-    const base64=ev.target.result.split(',')[1];
-    const mime=ev.target.result.split(';')[0].split(':')[1];
     try{
-      const r=await fetch('https://api.anthropic.com/v1/messages',{
+      const r=await fetch(`${API}/api/identify`,{
         method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:mime,data:base64}},
-          {type:'text',text:'Identify this product for eBay search. Reply ONLY with JSON: {"name":"brand model spec","category":"category"}'}
-        ]}]})
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image:ev.target.result})
       });
       const data=await r.json();
-      const text=data.content?.map(c=>c.text||'').join('')||'';
-      const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
-      $('q').value=parsed.name;
-      setStatus('AI identified: '+parsed.name,'ok');
-      await saveSearch(parsed.name);
-      fetchSold(parsed.name,parsed.category||'General');
+      if(data.error)throw new Error(data.error);
+      $('q').value=data.name;
+      setStatus('AI identified: '+data.name,'ok');
+      await saveSearch(data.name);
+      fetchSold(data.name,data.category||'General');
     }catch(err){setStatus('AI identification failed — type product name below','info');}
   };
   fr.readAsDataURL(file);
