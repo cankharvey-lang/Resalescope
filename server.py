@@ -123,6 +123,47 @@ def ebay_sold():
         return jsonify({'error': 'Could not fetch eBay data: ' + str(e)}), 502
 
 
+@app.route('/api/identify', methods=['POST'])
+def identify():
+    body = request.get_json() or {}
+    image = body.get('image', '')
+    if not image:
+        return jsonify({'error': 'image required'}), 400
+
+    ANTHROPIC_KEY = os.getenv('ANTHROPIC_KEY', '')
+    if not ANTHROPIC_KEY:
+        return jsonify({'error': 'AI not configured'}), 500
+
+    base64_data = image.split(',')[1] if ',' in image else image
+    mime_raw    = image.split(';')[0].split(':')[1] if ';' in image else 'image/jpeg'
+    media_type  = mime_raw if mime_raw in ('image/jpeg','image/png','image/webp','image/gif') else 'image/jpeg'
+
+    try:
+        r = requests.post(
+            'https://api.anthropic.com/v1/messages',
+            json={
+                'model': 'claude-sonnet-4-20250514',
+                'max_tokens': 200,
+                'messages': [{
+                    'role': 'user',
+                    'content': [
+                        {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': base64_data}},
+                        {'type': 'text', 'text': 'Identify this product for eBay search. Reply ONLY with JSON: {"name":"brand model spec","category":"category"}'}
+                    ]
+                }]
+            },
+            headers={'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01'},
+            timeout=30
+        )
+        r.raise_for_status()
+        text   = ''.join(c.get('text','') for c in r.json().get('content', []))
+        parsed = json.loads(text.replace('```json','').replace('```','').strip())
+        return jsonify(parsed)
+    except Exception as e:
+        print(f'AI identify error: {e}')
+        return jsonify({'error': 'AI identification failed'}), 502
+
+
 @app.route('/api/barcode/<code>')
 def barcode(code):
     try:
