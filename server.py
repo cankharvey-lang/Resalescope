@@ -143,7 +143,7 @@ def identify():
         r = requests.post(
             'https://api.anthropic.com/v1/messages',
             json={
-                'model': 'claude-sonnet-4-20250514',
+                'model': 'claude-3-5-sonnet-20241022',
                 'max_tokens': 200,
                 'messages': [{
                     'role': 'user',
