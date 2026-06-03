@@ -320,7 +320,7 @@ const firebaseConfig = {
 };
 
 // ── Anthropic API key (add yours here when ready) ─────────────────────────────
-const ANTHROPIC_KEY = ''; // <- paste your key here e.g. 'sk-ant-api03-...'
+const ANTHROPIC_KEY = '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';
 
 const API = 'https://compassionate-patience-production-4d82.up.railway.app';
 
@@ -449,7 +449,6 @@ function triggerUpload(){resetButtons();$('ub').classList.add('on');$('inp-uploa
 
 function startAIPhoto() {
   if (!ANTHROPIC_KEY) { showProModal(); return; }
-  if (userPlan !== 'pro') { showProModal(); return; }
   resetButtons(); $('aib').classList.add('on'); $('inp-ai').click();
 }
 
