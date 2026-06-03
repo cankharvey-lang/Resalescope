@@ -1,5 +1,7 @@
 """
 PriceScout — Python Backend
+Uses RapidAPI eBay Average Selling Price API (POST)
+Returns avg, min, max and individual listings
 """
 
 import os, requests
@@ -11,6 +13,13 @@ CORS(app)
 
 RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', 'ad18cc42aamshcf9a7059a2cf7b0p1a5cc2jsn47199c0efcc3')
 PORT         = int(os.getenv('PORT', 8080))
+
+
+def parse_price(val):
+    try:
+        return round(float(str(val).replace('£','').replace('$','').replace(',','').strip()), 2)
+    except:
+        return 0.0
 
 
 @app.route('/health')
@@ -52,10 +61,15 @@ def ebay_sold():
         )
         r.raise_for_status()
         data = r.json()
+        print('API response keys:', list(data.keys()) if isinstance(data, dict) else type(data))
 
-        # Debug: print raw response to logs
-        print('RapidAPI response:', str(data)[:500])
+        # ── Top-level stats from API ──────────────────────────────────────────
+        avg       = parse_price(data.get('average_price', 0))
+        low       = parse_price(data.get('min_price',     0))
+        high      = parse_price(data.get('max_price',     0))
+        total     = int(data.get('total_results', 0) or 0)
 
+        # ── Individual listings ───────────────────────────────────────────────
         raw_items = data.get('results', [])
         if not isinstance(raw_items, list):
             raw_items = []
@@ -64,11 +78,7 @@ def ebay_sold():
         for i, item in enumerate(raw_items[:20]):
             if not isinstance(item, dict):
                 continue
-            try:
-                price_raw = item.get('sold_price') or item.get('price') or 0
-                price = float(str(price_raw).replace('£','').replace('$','').replace(',','').strip())
-            except:
-                price = 0
+            price = parse_price(item.get('sold_price') or item.get('price') or 0)
             listings.append({
                 'id':        str(i),
                 'title':     str(item.get('title', query)),
@@ -76,22 +86,24 @@ def ebay_sold():
                 'currency':  'GBP',
                 'condition': str(item.get('condition', 'Unknown')),
                 'soldDate':  str(item.get('end_date') or item.get('date') or ''),
-                'url':       str(item.get('url') or item.get('itemUrl') or ''),
+                'url':       str(item.get('url') or item.get('itemUrl') or
+                               f'https://www.ebay.co.uk/sch/i.html?_nkw={query}&LH_Sold=1'),
                 'imageUrl':  str(item.get('image') or item.get('imageUrl') or ''),
                 'location':  str(item.get('location') or 'United Kingdom'),
             })
 
-        prices = sorted([l['price'] for l in listings if l['price'] > 0])
-
-        try:
-            avg = float(str(data.get('average_price') or data.get('averagePrice') or 0).replace('£','').replace('$','').replace(',',''))
-        except:
-            avg = round(sum(prices)/len(prices), 2) if prices else 0
-
-        try:
-            total = int(str(data.get('total_results') or data.get('totalResults') or len(listings)))
-        except:
+        # If API gave us min/max use those, else derive from listings
+        item_prices = sorted([l['price'] for l in listings if l['price'] > 0])
+        if low == 0 and item_prices:
+            low = item_prices[0]
+        if high == 0 and item_prices:
+            high = item_prices[-1]
+        if avg == 0 and item_prices:
+            avg = round(sum(item_prices) / len(item_prices), 2)
+        if total == 0:
             total = len(listings)
+
+        median = item_prices[len(item_prices)//2] if item_prices else avg
 
         return jsonify({
             'query':     query,
@@ -99,10 +111,10 @@ def ebay_sold():
             'listings':  listings,
             'stats': {
                 'count':  len(listings),
-                'avg':    round(avg, 2),
-                'low':    round(prices[0], 2) if prices else 0,
-                'high':   round(prices[-1], 2) if prices else 0,
-                'median': round(prices[len(prices)//2], 2) if prices else 0,
+                'avg':    avg,
+                'low':    low,
+                'high':   high,
+                'median': median,
             }
         })
 
@@ -120,7 +132,8 @@ def barcode(code):
             p = d['product']
             name = p.get('product_name') or p.get('product_name_en', '')
             if name:
-                return jsonify({'name': f"{p.get('brands','')} {name}".strip(), 'category': 'Food & Grocery', 'source': 'OpenFoodFacts'})
+                return jsonify({'name': f"{p.get('brands','')} {name}".strip(),
+                                'category': 'Food & Grocery', 'source': 'OpenFoodFacts'})
     except:
         pass
     try:
@@ -128,7 +141,8 @@ def barcode(code):
         items = r.json().get('items', [])
         if items and items[0].get('title'):
             i = items[0]
-            return jsonify({'name': i['title'], 'brand': i.get('brand',''), 'category': i.get('category','General'), 'source': 'UPCItemDB'})
+            return jsonify({'name': i['title'], 'brand': i.get('brand',''),
+                            'category': i.get('category','General'), 'source': 'UPCItemDB'})
     except:
         pass
     return jsonify({'name': code, 'category': 'General', 'source': 'raw'})
