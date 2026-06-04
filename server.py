@@ -10,9 +10,12 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder='public')
 CORS(app)
 
-RAPIDAPI_KEY  = os.getenv('RAPIDAPI_KEY', 'ad18cc42aamshcf9a7059a2cf7b0p1a5cc2jsn47199c0efcc3')
-ANTHROPIC_KEY = os.getenv('ANTHROPIC_KEY', '')
-PORT          = int(os.getenv('PORT', 8080))
+RAPIDAPI_KEY      = os.getenv('RAPIDAPI_KEY', 'ad18cc42aamshcf9a7059a2cf7b0p1a5cc2jsn47199c0efcc3')
+ANTHROPIC_KEY     = os.getenv('ANTHROPIC_KEY', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_PRICE_ID   = os.getenv('STRIPE_PRICE_ID', 'price_1TeY0HHzkJINbfejP0vlCO98')
+PORT              = int(os.getenv('PORT', 8080))
 
 # ── Vinted session cookie cache ───────────────────────────────────────────────
 _vinted_cookie = None
@@ -39,7 +42,118 @@ def parse_price(val):
         return 0.0
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'anthropic': bool(ANTHROPIC_KEY), 'rapidapi': bool(RAPIDAPI_KEY)})
+    return jsonify({'status': 'ok', 'anthropic': bool(ANTHROPIC_KEY), 'rapidapi': bool(RAPIDAPI_KEY), 'stripe': bool(STRIPE_SECRET_KEY)})
+
+# ── Stripe: create checkout session ──────────────────────────────────────────
+@app.route('/api/stripe/checkout', methods=['POST'])
+def stripe_checkout():
+    if not STRIPE_SECRET_KEY:
+        return jsonify({'error': 'Stripe not configured'}), 500
+    body = request.get_json() or {}
+    user_id    = body.get('userId', '')
+    user_email = body.get('email', '')
+    success_url = body.get('successUrl', 'https://compassionate-patience-production-4d82.up.railway.app?upgraded=true')
+    cancel_url  = body.get('cancelUrl',  'https://compassionate-patience-production-4d82.up.railway.app?cancelled=true')
+    try:
+        r = requests.post(
+            'https://api.stripe.com/v1/checkout/sessions',
+            auth=(STRIPE_SECRET_KEY, ''),
+            data={
+                'payment_method_types[]':     'card',
+                'mode':                        'subscription',
+                'line_items[0][price]':        STRIPE_PRICE_ID,
+                'line_items[0][quantity]':     '1',
+                'customer_email':              user_email,
+                'metadata[userId]':            user_id,
+                'success_url':                 success_url,
+                'cancel_url':                  cancel_url,
+            },
+            timeout=10
+        )
+        r.raise_for_status()
+        session = r.json()
+        return jsonify({'url': session['url'], 'sessionId': session['id']})
+    except Exception as e:
+        print(f'Stripe checkout error: {e}')
+        return jsonify({'error': 'Could not create checkout session: ' + str(e)}), 502
+
+# ── Stripe: webhook (updates Firebase plan after payment) ────────────────────
+@app.route('/api/stripe/webhook', methods=['POST'])
+def stripe_webhook():
+    payload    = request.get_data()
+    sig_header = request.headers.get('Stripe-Signature', '')
+
+    # Verify webhook signature if secret is set
+    if STRIPE_WEBHOOK_SECRET:
+        try:
+            import hmac, hashlib, time
+            elements   = dict(e.split('=', 1) for e in sig_header.split(',') if '=' in e)
+            timestamp  = elements.get('t', '')
+            signature  = elements.get('v1', '')
+            signed_payload = f'{timestamp}.{payload.decode("utf-8")}'
+            expected   = hmac.new(STRIPE_WEBHOOK_SECRET.encode(), signed_payload.encode(), hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(expected, signature):
+                return jsonify({'error': 'Invalid signature'}), 400
+        except Exception as e:
+            print(f'Webhook signature error: {e}')
+            return jsonify({'error': 'Signature verification failed'}), 400
+
+    try:
+        event = json.loads(payload)
+        event_type = event.get('type', '')
+        print(f'Stripe webhook: {event_type}')
+
+        # Payment succeeded — upgrade user to Pro
+        if event_type in ('checkout.session.completed', 'invoice.payment_succeeded'):
+            session  = event.get('data', {}).get('object', {})
+            user_id  = session.get('metadata', {}).get('userId', '')
+            customer = session.get('customer', '')
+
+            if user_id:
+                # Update Firebase via REST API
+                firebase_url = f'https://firestore.googleapis.com/v1/projects/pricescout-2e8a3/databases/(default)/documents/users/{user_id}'
+                update_data  = {
+                    'fields': {
+                        'plan':             {'stringValue': 'pro'},
+                        'stripeCustomerId': {'stringValue': customer},
+                        'upgradedAt':       {'timestampValue': __import__('datetime').datetime.utcnow().isoformat() + 'Z'}
+                    }
+                }
+                r = requests.patch(
+                    firebase_url,
+                    json=update_data,
+                    params={'updateMask.fieldPaths': ['plan', 'stripeCustomerId', 'upgradedAt']},
+                    timeout=10
+                )
+                print(f'Firebase update status: {r.status_code} for user {user_id}')
+
+        # Subscription cancelled — downgrade to free
+        elif event_type in ('customer.subscription.deleted', 'invoice.payment_failed'):
+            session  = event.get('data', {}).get('object', {})
+            customer = session.get('customer', '')
+            if customer:
+                # Find user by stripeCustomerId
+                query_url = 'https://firestore.googleapis.com/v1/projects/pricescout-2e8a3/databases/(default)/documents:runQuery'
+                query = {'structuredQuery': {'from': [{'collectionId': 'users'}], 'where': {'fieldFilter': {'field': {'fieldPath': 'stripeCustomerId'}, 'op': 'EQUAL', 'value': {'stringValue': customer}}}}}
+                r = requests.post(query_url, json=query, timeout=10)
+                docs = r.json()
+                for doc in docs:
+                    doc_name = doc.get('document', {}).get('name', '')
+                    if doc_name:
+                        requests.patch(
+                            f'https://firestore.googleapis.com/v1/{doc_name}',
+                            json={'fields': {'plan': {'stringValue': 'free'}}},
+                            params={'updateMask.fieldPaths': ['plan']},
+                            timeout=10
+                        )
+                        print(f'Downgraded user to free: {doc_name}')
+
+        return jsonify({'received': True})
+    except Exception as e:
+        print(f'Webhook error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/')
 def index():
     return send_from_directory('public', 'index.html')
