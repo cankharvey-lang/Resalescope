@@ -3,7 +3,7 @@ PriceScout — Python Backend
 Uses RapidAPI eBay Average Selling Price API (POST)
 Returns avg, min, max and individual listings
 """
-import os, requests, base64 as b64lib
+import os, json, requests, base64 as b64lib
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 app = Flask(__name__, static_folder='public')
