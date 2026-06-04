@@ -543,6 +543,8 @@ async function loadUserProfile(user) {
   // Show/hide profit calculator
   $('profit-locked').style.display = userPlan==='pro'?'none':'block';
   $('profit-unlocked').style.display = userPlan==='pro'?'block':'none';
+  // Update search counter based on plan
+  updateSearchCounter();
 }
 
 function showMainApp() { $('login-screen').style.display='none'; $('register-screen').style.display='none'; $('main-app').classList.add('show'); }
