@@ -46,6 +46,7 @@ def index():
 @app.route('/api/ebay/sold')
 def ebay_sold():
     query = request.args.get('q', '').strip()
+    limit = min(int(request.args.get('limit', 20)), 100)
     if not query:
         return jsonify({'error': 'q parameter required'}), 400
     headers = {
@@ -202,10 +203,9 @@ def identify():
             'anthropic-version': '2023-06-01',
             'content-type': 'application/json'
         }
-        print(f'Calling Anthropic with key starting: {ANTHROPIC_KEY[:20]}')
+        print(f'Calling Anthropic with key: configured')
         r = requests.post('https://api.anthropic.com/v1/messages', json=payload, headers=headers, timeout=30)
         print(f'Anthropic status: {r.status_code}')
-        print(f'Anthropic response: {r.text[:200]}')
         r.raise_for_status()
         text   = ''.join(c.get('text','') for c in r.json().get('content', []))
         parsed = json.loads(text.replace('```json','').replace('```','').strip())
