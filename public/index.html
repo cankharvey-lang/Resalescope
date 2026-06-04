@@ -242,23 +242,18 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 
     <div class="mode-row">
       <button class="mbtn" id="bb" onclick="startBarcode()">
-        <i class="ti ti-barcode" aria-hidden="true"></i>Scan
-      </button>
-      <button class="mbtn" id="pb" onclick="startPhoto()">
-        <i class="ti ti-camera" aria-hidden="true"></i>Photo
+        <i class="ti ti-barcode" aria-hidden="true"></i>Scan barcode
       </button>
       <button class="mbtn pro-feature" id="aib" onclick="startAIPhoto()">
         <i class="ti ti-brain" aria-hidden="true"></i>AI Scan
-        <i class="ti ti-lock pro-lock" aria-hidden="true"></i>
       </button>
       <button class="mbtn" id="ub" onclick="triggerUpload()">
-        <i class="ti ti-photo-up" aria-hidden="true"></i>Upload
+        <i class="ti ti-photo-up" aria-hidden="true"></i>Upload image
       </button>
     </div>
 
     <div id="barcode-reader-div"></div>
     <input type="file" id="inp-barcode" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodeCapture(event)"/>
-    <input type="file" id="inp-photo"   accept="image/*" capture="environment" style="display:none" onchange="handlePhotoCapture(event)"/>
     <input type="file" id="inp-ai"      accept="image/*" capture="environment" style="display:none" onchange="handleAIPhoto(event)"/>
     <input type="file" id="inp-upload"  accept="image/*"                       style="display:none" onchange="handleUpload(event)"/>
 
@@ -276,6 +271,18 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
   </div>
 
   <div class="results" id="results">
+    <div id="prod-hero" style="display:none;margin-bottom:10px;border-radius:var(--radius);overflow:hidden;background:var(--card);border:1px solid var(--border);">
+      <img id="prod-hero-img" src="" alt="product" style="width:100%;height:200px;object-fit:contain;background:#0d1117;display:block;"/>
+      <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+        <div style="flex:1">
+          <div id="prod-hero-name" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;"></div>
+          <div id="prod-hero-meta" style="font-size:11px;color:var(--text2);"></div>
+        </div>
+        <button onclick="confirmProduct()" style="padding:8px 16px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">✓ Correct item</button>
+        <button onclick="wrongProduct()" style="padding:8px 12px;border-radius:8px;background:var(--card2);color:var(--text2);border:1px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">✗ Wrong</button>
+      </div>
+    </div>
+    <div id="prod-stats-wrap" style="display:none">
     <div class="prod-card" id="prod-card"></div>
     <div class="stats" id="stats"></div>
     <div class="price-range" id="price-range"></div>
@@ -284,6 +291,7 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
     <a class="ebay-link" id="ebay-link" href="#" target="_blank" rel="noopener">
       <i class="ti ti-external-link" aria-hidden="true"></i>View all sold listings on eBay
     </a>
+    </div><!-- end prod-stats-wrap -->
   </div>
 </div>
 
@@ -439,7 +447,7 @@ function setStatus(msg,type){const el=$('status');el.className='status '+type;el
 function clearStatus(){$('status').className='status';}
 function timeAgo(str){if(!str)return'';const d=Math.floor((Date.now()-new Date(str))/86400000);return d===0?'Today':d===1?'Yesterday':d+' days ago';}
 function showPreview(url){$('cam-idle').style.display='none';$('photo-prev').style.display='block';$('prev-img').src=url;}
-function resetButtons(){['bb','pb','aib','ub'].forEach(id=>$(id).classList.remove('on'));}
+function resetButtons(){['bb','aib','ub'].forEach(id=>$(id).classList.remove('on'));}
 
 function startBarcode(){resetButtons();$('bb').classList.add('on');$('inp-barcode').click();}
 function startPhoto(){resetButtons();$('pb').classList.add('on');$('inp-photo').click();}
@@ -531,10 +539,38 @@ async function fetchSold(query,category) {
   }catch(e){setStatus('eBay lookup failed: '+e.message,'err');}
 }
 
+let pendingResultData = null;
+
+function confirmProduct() {
+  $('prod-hero').style.display = 'none';
+  $('prod-stats-wrap').style.display = 'block';
+  $('prod-stats-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function wrongProduct() {
+  $('prod-hero').style.display = 'none';
+  $('results').classList.remove('on');
+  $('q').value = '';
+  setStatus('Try scanning again or type the product name below','info');
+  $('q').focus();
+}
+
 function renderResults(data,query,category) {
   const{stats,listings,totalSold}=data;
   const cur=listings[0]?.currency||'GBP';
   const img=listings.find(l=>l.imageUrl)?.imageUrl||'';
+
+  // Show hero image confirmation first
+  if(img) {
+    $('prod-hero-img').src = img;
+    $('prod-hero-img').onerror = () => { $('prod-hero-img').style.display='none'; };
+  } else {
+    $('prod-hero-img').style.display = 'none';
+  }
+  $('prod-hero-name').textContent = query;
+  $('prod-hero-meta').textContent = `${category} · ${totalSold} sold in last 30 days`;
+  $('prod-hero').style.display = 'block';
+  $('prod-stats-wrap').style.display = 'none';
 
   $('prod-card').innerHTML=`
     ${img?`<img class="prod-thumb" src="${img}" alt="product" onerror="this.style.display='none'">`:`<div class="prod-thumb-ph"><i class="ti ti-tag" aria-hidden="true"></i></div>`}
@@ -562,7 +598,8 @@ function renderResults(data,query,category) {
     </div>`).join('');
 
   $('ebay-link').href=`https://www.ebay.co.uk/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
-  $('results').classList.add('on');clearStatus();
+  $('results').classList.add('on');
+  clearStatus();
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
