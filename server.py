@@ -99,8 +99,60 @@ def ebay_sold():
             }
         })
     except Exception as e:
-        print(f'RapidAPI error: {e}')
-        return jsonify({'error': 'Could not fetch eBay data: ' + str(e)}), 502
+        print(f'RapidAPI error: {e} — trying eBay Finding API fallback')
+
+    # ── Fallback: eBay Finding API ────────────────────────────────────────────
+    try:
+        from datetime import datetime, timedelta, timezone
+        thirty_ago = (datetime.now(timezone.utc) - timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        params = {
+            'OPERATION-NAME': 'findCompletedItems',
+            'SERVICE-VERSION': '1.0.0',
+            'SECURITY-APPNAME': 'HarveyCa-PriceSco-PRD-88b00c500-2ca7bf20',
+            'RESPONSE-DATA-FORMAT': 'JSON',
+            'keywords': query,
+            'itemFilter(0).name': 'SoldItemsOnly',
+            'itemFilter(0).value': 'true',
+            'itemFilter(1).name': 'EndTimeFrom',
+            'itemFilter(1).value': thirty_ago,
+            'sortOrder': 'EndTimeSoonest',
+            'paginationInput.entriesPerPage': str(limit),
+            'GLOBAL-ID': 'EBAY-GB',
+        }
+        r = requests.get('https://svcs.ebay.com/services/search/FindingService/v1', params=params, timeout=10)
+        data = r.json()
+        raw = data.get('findCompletedItemsResponse', [{}])[0]
+        ack = raw.get('ack', [''])[0]
+        if ack in ('Success', 'Warning'):
+            items = raw.get('searchResult', [{}])[0].get('item', [])
+            listings = []
+            for item in items:
+                pb = item.get('sellingStatus', [{}])[0].get('convertedCurrentPrice', [{}])[0]
+                listings.append({
+                    'id':        item.get('itemId', [''])[0],
+                    'title':     item.get('title', [''])[0],
+                    'price':     float(pb.get('__value__', 0)),
+                    'currency':  pb.get('@currencyId', 'GBP'),
+                    'condition': item.get('condition', [{}])[0].get('conditionDisplayName', ['Unknown'])[0],
+                    'soldDate':  item.get('listingInfo', [{}])[0].get('endTime', [''])[0],
+                    'url':       item.get('viewItemURL', [''])[0],
+                    'imageUrl':  item.get('galleryURL', [''])[0] if item.get('galleryURL') else '',
+                    'location':  item.get('location', [''])[0],
+                })
+            prices = sorted([l['price'] for l in listings if l['price'] > 0])
+            avg = round(sum(prices)/len(prices), 2) if prices else 0
+            total = int(raw.get('paginationOutput', [{}])[0].get('totalEntries', [len(listings)])[0])
+            return jsonify({
+                'query': query, 'totalSold': total, 'listings': listings,
+                'stats': {'count': len(listings), 'avg': avg,
+                          'low': prices[0] if prices else 0,
+                          'high': prices[-1] if prices else 0,
+                          'median': prices[len(prices)//2] if prices else 0}
+            })
+    except Exception as e2:
+        print(f'eBay fallback error: {e2}')
+
+    return jsonify({'error': 'Could not fetch eBay data. Please try again shortly.'}), 502
 @app.route('/api/identify', methods=['POST'])
 def identify():
     body = request.get_json() or {}
