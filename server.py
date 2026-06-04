@@ -6,11 +6,32 @@ Returns avg, min, max and individual listings
 import os, json, requests, base64 as b64lib
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+
 app = Flask(__name__, static_folder='public')
 CORS(app)
+
 RAPIDAPI_KEY  = os.getenv('RAPIDAPI_KEY', 'ad18cc42aamshcf9a7059a2cf7b0p1a5cc2jsn47199c0efcc3')
 ANTHROPIC_KEY = os.getenv('ANTHROPIC_KEY', '')
-PORT         = int(os.getenv('PORT', 8080))
+PORT          = int(os.getenv('PORT', 8080))
+
+# ── Vinted session cookie cache ───────────────────────────────────────────────
+_vinted_cookie = None
+
+def get_vinted_cookie():
+    global _vinted_cookie
+    try:
+        r = requests.get(
+            'https://www.vinted.co.uk',
+            headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'},
+            timeout=10, allow_redirects=True
+        )
+        cookies = r.cookies.get_dict()
+        if cookies:
+            _vinted_cookie = '; '.join([f'{k}={v}' for k, v in cookies.items()])
+            return _vinted_cookie
+    except Exception as e:
+        print(f'Vinted cookie fetch error: {e}')
+    return None
 def parse_price(val):
     try:
         return round(float(str(val).replace('£','').replace('$','').replace(',','').strip()), 2)
@@ -192,6 +213,97 @@ def identify():
     except Exception as e:
         print(f'AI identify error: {e}')
         return jsonify({'error': 'AI identification failed: ' + str(e)}), 502
+@app.route('/api/vinted/search')
+def vinted_search():
+    query = request.args.get('q', '').strip()
+    limit = min(int(request.args.get('limit', 20)), 50)
+    if not query:
+        return jsonify({'error': 'q parameter required'}), 400
+
+    global _vinted_cookie
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-GB,en;q=0.9',
+        'Referer': 'https://www.vinted.co.uk/',
+        'Origin': 'https://www.vinted.co.uk',
+    }
+
+    # Try to get/refresh cookie
+    if not _vinted_cookie:
+        get_vinted_cookie()
+    if _vinted_cookie:
+        headers['Cookie'] = _vinted_cookie
+
+    params = {
+        'search_text': query,
+        'per_page': str(limit),
+        'order': 'newest_first',
+        'currency': 'GBP',
+    }
+
+    try:
+        r = requests.get(
+            'https://www.vinted.co.uk/api/v2/catalog/items',
+            headers=headers, params=params, timeout=10
+        )
+
+        # If blocked, refresh cookie and retry
+        if r.status_code in (401, 403):
+            print('Vinted cookie expired, refreshing...')
+            get_vinted_cookie()
+            if _vinted_cookie:
+                headers['Cookie'] = _vinted_cookie
+            r = requests.get('https://www.vinted.co.uk/api/v2/catalog/items', headers=headers, params=params, timeout=10)
+
+        r.raise_for_status()
+        data = r.json()
+        raw_items = data.get('items', [])
+
+        listings = []
+        for item in raw_items[:limit]:
+            price_raw = item.get('price', {})
+            price = float(price_raw.get('amount', 0)) if isinstance(price_raw, dict) else float(price_raw or 0)
+            photo = item.get('photo', {})
+            img_url = ''
+            if isinstance(photo, dict):
+                img_url = photo.get('url', photo.get('full_size_url', ''))
+            elif isinstance(photo, list) and photo:
+                img_url = photo[0].get('url', '') if isinstance(photo[0], dict) else ''
+
+            listings.append({
+                'id':        str(item.get('id', '')),
+                'title':     item.get('title', query),
+                'price':     price,
+                'currency':  'GBP',
+                'condition': item.get('status', 'Unknown'),
+                'brand':     item.get('brand_title', ''),
+                'size':      item.get('size_title', ''),
+                'url':       item.get('url', f'https://www.vinted.co.uk/items/{item.get("id","")}'),
+                'imageUrl':  img_url,
+                'location':  item.get('user', {}).get('location', 'United Kingdom') if isinstance(item.get('user'), dict) else 'United Kingdom',
+                'favourites': item.get('favourite_count', 0),
+            })
+
+        prices = sorted([l['price'] for l in listings if l['price'] > 0])
+        avg   = round(sum(prices)/len(prices), 2) if prices else 0
+        low   = prices[0] if prices else 0
+        high  = prices[-1] if prices else 0
+        total = data.get('pagination', {}).get('total_count', len(listings))
+
+        return jsonify({
+            'query':    query,
+            'total':    total,
+            'listings': listings,
+            'stats': {'count': len(listings), 'avg': avg, 'low': low, 'high': high}
+        })
+
+    except Exception as e:
+        print(f'Vinted error: {e}')
+        return jsonify({'error': 'Could not fetch Vinted listings: ' + str(e)}), 502
+
+
 @app.route('/api/barcode/<code>')
 def barcode(code):
     try:
