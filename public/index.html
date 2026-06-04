@@ -193,6 +193,27 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .profit-locked p{font-size:12px;color:var(--text2);text-align:center;}
 .profit-locked button{padding:8px 20px;border-radius:8px;background:var(--yellow);color:#0d1117;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
 
+/* Platform tabs */
+.platform-tabs{display:flex;gap:6px;margin-bottom:10px;}
+.platform-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:var(--card2);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);transition:all .15s;font-family:'Inter',sans-serif;}
+.platform-tab.active{border-color:var(--blue);color:var(--blue);background:rgba(77,159,255,.08);}
+.platform-tab img{width:16px;height:16px;border-radius:3px;}
+.vinted-tag{font-size:9px;padding:1px 5px;border-radius:10px;background:rgba(9,182,109,.15);color:#09b66d;border:1px solid rgba(9,182,109,.3);margin-left:3px;}
+
+/* Vinted listing */
+.vinted-listing{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border2);cursor:pointer;transition:background .1s;}
+.vinted-listing:last-child{border-bottom:none;}
+.vinted-listing:hover{background:var(--card2);}
+.v-img{width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--border);background:#0d1117;flex-shrink:0;}
+.v-img-ph{width:40px;height:40px;border-radius:6px;background:var(--card2);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.v-img-ph i{font-size:18px;color:var(--text3);}
+.v-info{flex:1;min-width:0;}
+.v-title{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;color:var(--text);font-weight:500;}
+.v-meta{font-size:10px;color:var(--text3);}
+.v-price{font-size:14px;font-weight:800;color:#09b66d;}
+.v-fav{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:2px;}
+.vinted-empty{padding:30px;text-align:center;color:var(--text3);font-size:12px;}
+
 /* Share button */
 .share-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--radius);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;background:var(--card2);width:100%;font-family:'Inter',sans-serif;margin-bottom:8px;}
 .share-btn:hover{background:var(--card);color:var(--text);}
@@ -428,8 +449,26 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
         <button class="add-watch-btn" id="add-watch-btn" onclick="addToWatchlist()"><i class="ti ti-bookmark-plus" aria-hidden="true"></i>Add to watchlist</button>
 
         <div class="sec-hd">Recent sold listings</div>
-        <div class="listings-wrap" id="listings"></div>
-        <a class="ebay-link" id="ebay-link" href="#" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i>View all sold listings on eBay</a>
+
+        <!-- Platform tabs -->
+        <div class="platform-tabs">
+          <button class="platform-tab active" id="tab-ebay" onclick="switchPlatform('ebay')">
+            <span style="font-weight:800;font-size:13px;letter-spacing:-0.5px"><span style="color:#E53238">e</span><span style="color:#4d9fff">b</span><span style="color:#ffcc00">a</span><span style="color:#3fb950">y</span></span> Sold listings
+          </button>
+          <button class="platform-tab" id="tab-vinted" onclick="switchPlatform('vinted')">
+            <span style="color:#09b66d;font-weight:800">Vinted</span> <span class="vinted-tag">LIVE</span>
+          </button>
+        </div>
+
+        <div id="ebay-panel">
+          <div class="listings-wrap" id="listings"></div>
+          <a class="ebay-link" id="ebay-link" href="#" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i>View all sold listings on eBay</a>
+        </div>
+
+        <div id="vinted-panel" style="display:none">
+          <div class="listings-wrap" id="vinted-listings"><div class="vinted-empty"><i class="ti ti-loader" aria-hidden="true"></i><br/>Loading Vinted listings…</div></div>
+          <a class="ebay-link" id="vinted-link" href="#" target="_blank" rel="noopener" style="border-color:#09b66d;color:#09b66d;"><i class="ti ti-external-link" aria-hidden="true"></i>View all on Vinted</a>
+        </div>
       </div>
     </div>
   </div>
@@ -830,6 +869,12 @@ function renderResults(data,query,category) {
   const cur=listings[0]?.currency||'GBP';
   const img=listings.find(l=>l.imageUrl)?.imageUrl||'';
   currentQuery=query; currentAvgPrice=stats.avg; currentCurrency=cur;
+  // Reset platform tabs to eBay
+  $('tab-ebay').classList.add('active');
+  $('tab-vinted').classList.remove('active');
+  $('ebay-panel').style.display='block';
+  $('vinted-panel').style.display='none';
+  $('vinted-listings').innerHTML='<div class="vinted-empty"><i class="ti ti-loader" aria-hidden="true"></i><br/>Loading Vinted listings…</div>';
 
   // Hero confirmation
   if(img){$('prod-hero-img').src=img;$('prod-hero-img').onerror=()=>{$('prod-hero-img').style.display='none';};}
@@ -871,6 +916,54 @@ function renderResults(data,query,category) {
   checkAlerts(listings);
   $('results').classList.add('on');clearStatus();
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── Platform tabs ─────────────────────────────────────────────────────────────
+function switchPlatform(platform) {
+  document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+  $('tab-' + platform).classList.add('active');
+  $('ebay-panel').style.display   = platform === 'ebay'   ? 'block' : 'none';
+  $('vinted-panel').style.display = platform === 'vinted' ? 'block' : 'none';
+  if (platform === 'vinted' && $('vinted-listings').innerHTML.includes('Loading')) {
+    fetchVinted(currentQuery);
+  }
+}
+
+async function fetchVinted(query) {
+  try {
+    $('vinted-listings').innerHTML = '<div class="vinted-empty"><i class="ti ti-loader" aria-hidden="true"></i><br/>Searching Vinted…</div>';
+    const r = await fetch(`${API}/api/vinted/search?q=${encodeURIComponent(query)}&limit=20`);
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    renderVintedListings(data, query);
+  } catch(e) {
+    $('vinted-listings').innerHTML = `<div class="vinted-empty">Could not load Vinted listings.<br>Try again shortly.</div>`;
+  }
+}
+
+function renderVintedListings(data, query) {
+  const { listings, total } = data;
+  $('vinted-link').href = `https://www.vinted.co.uk/catalog?search_text=${encodeURIComponent(query)}`;
+
+  if (!listings.length) {
+    $('vinted-listings').innerHTML = `<div class="vinted-empty">No listings found on Vinted for "${query}"</div>`;
+    return;
+  }
+
+  $('vinted-listings').innerHTML = listings.slice(0, 12).map(l => `
+    <div class="vinted-listing" onclick="window.open('${l.url}','_blank')">
+      ${l.imageUrl
+        ? `<img class="v-img" src="${l.imageUrl}" alt="" onerror="this.style.display='none'">`
+        : `<div class="v-img-ph"><i class="ti ti-shirt" aria-hidden="true"></i></div>`}
+      <div class="v-info">
+        <div class="v-title">${l.title}</div>
+        <div class="v-meta">${[l.brand, l.size, l.condition].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        <span class="v-price">£${l.price.toFixed(2)}</span>
+        <span class="v-fav"><i class="ti ti-heart" aria-hidden="true"></i>${l.favourites}</span>
+      </div>
+    </div>`).join('');
 }
 
 // ── Notifications & Price Alerts ──────────────────────────────────────────────
