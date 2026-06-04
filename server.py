@@ -164,6 +164,14 @@ def stripe_webhook():
 @app.route('/')
 def index():
     return send_from_directory('public', 'index.html')
+
+@app.route('/privacy')
+def privacy():
+    return send_from_directory('public', 'privacy-policy.html')
+
+@app.route('/terms')
+def terms():
+    return send_from_directory('public', 'terms-of-service.html')
 @app.route('/api/ebay/sold')
 def ebay_sold():
     query = request.args.get('q', '').strip()
