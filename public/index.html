@@ -19,9 +19,9 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{background:var(--bg);min-height:100vh;color:var(--text);}
 body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
-#app{width:100%;max-width:420px;padding-bottom:40px;}
+#app{width:100%;max-width:420px;padding-bottom:80px;}
 
-/* ── Auth screens ── */
+/* Auth */
 .auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
 .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
 .logo-dots{display:flex;gap:5px;}
@@ -51,7 +51,7 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .auth-err{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;display:none;}
 .auth-err.show{display:block;}
 
-/* ── Main app ── */
+/* Main app */
 .main-app{display:none;}
 .main-app.show{display:block;}
 
@@ -72,6 +72,16 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .signout-btn{font-size:11px;color:var(--text3);cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif;}
 .signout-btn:hover{color:var(--red);}
 
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:30;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 12px;cursor:pointer;border:none;background:transparent;font-size:10px;font-weight:600;color:var(--text3);font-family:'Inter',sans-serif;transition:color .15s;}
+.nav-btn.active{color:var(--blue);}
+.nav-btn i{font-size:20px;}
+
+/* Pages */
+.page{display:none;padding-top:4px;}
+.page.active{display:block;}
+
 /* Scan card */
 .scan-wrap{margin:12px;background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;}
 .vbox{width:100%;height:180px;background:#080b10;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
@@ -85,15 +95,13 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 #prev-img{width:100%;height:100%;object-fit:contain;background:#080b10;}
 
 /* Mode buttons */
-.mode-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:10px;}
-.mbtn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px;border-radius:8px;border:1px solid var(--border);background:var(--card2);cursor:pointer;font-size:10px;font-weight:600;color:var(--text2);font-family:'Inter',sans-serif;transition:all .15s;}
+.mode-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px;}
+.mbtn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px;border-radius:8px;border:1px solid var(--border);background:var(--card2);cursor:pointer;font-size:10px;font-weight:600;color:var(--text2);font-family:'Inter',sans-serif;transition:all .15s;position:relative;}
 .mbtn:hover{background:var(--card);color:var(--text);}
 .mbtn.on{border-color:var(--blue);color:var(--blue);background:rgba(77,159,255,.08);}
 .mbtn i{font-size:18px;}
-.mbtn.pro-feature{position:relative;}
 .pro-lock{position:absolute;top:4px;right:4px;font-size:9px;color:var(--yellow);}
 
-/* Hidden */
 #barcode-reader-div{display:none;}
 
 /* Search */
@@ -102,7 +110,14 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .search-row input:focus{border-color:var(--blue);}
 .search-row input::placeholder{color:var(--text3);}
 .go-btn{padding:9px 16px;border-radius:8px;background:var(--blue);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
-.go-btn:hover{background:#2d87f0;}
+
+/* Search suggestions */
+.suggestions{margin:0 12px 8px;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:none;}
+.suggestions.show{display:block;}
+.suggestion-item{padding:9px 12px;font-size:12px;color:var(--text2);cursor:pointer;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px;}
+.suggestion-item:last-child{border-bottom:none;}
+.suggestion-item:hover{background:var(--card2);color:var(--text);}
+.suggestion-item i{font-size:13px;color:var(--text3);}
 
 /* Status */
 .status{margin:0 12px 8px;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:500;display:none;}
@@ -120,6 +135,18 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 /* Results */
 .results{padding:0 12px;display:none;}
 .results.on{display:block;}
+
+/* Hero image */
+.prod-hero{display:none;margin-bottom:10px;border-radius:var(--radius);overflow:hidden;background:var(--card);border:1px solid var(--border);}
+.prod-hero img{width:100%;height:200px;object-fit:contain;background:#0d1117;display:block;}
+.prod-hero-info{padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.prod-hero-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.prod-hero-meta{font-size:11px;color:var(--text2);}
+.confirm-btn{padding:8px 14px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
+.wrong-btn{padding:8px 10px;border-radius:8px;background:var(--card2);color:var(--text2);border:1px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
+
+/* Stats */
+.prod-stats-wrap{display:none;}
 .prod-card{display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;}
 .prod-thumb{width:52px;height:52px;border-radius:8px;flex-shrink:0;border:1px solid var(--border);object-fit:contain;background:#0d1117;}
 .prod-thumb-ph{width:52px;height:52px;border-radius:8px;flex-shrink:0;border:1px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;}
@@ -133,6 +160,8 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .stat-val.g{color:var(--green);}
 .stat-val.b{color:var(--blue);}
 .stat-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+
+/* Price bar */
 .price-range{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;}
 .pr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
 .pr-label{font-size:12px;font-weight:600;color:var(--text);}
@@ -141,6 +170,34 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .pr-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#3fb950,#4d9fff);width:100%;position:relative;}
 .pr-marker{position:absolute;top:-5px;width:3px;height:16px;background:var(--red);border-radius:2px;transform:translateX(-50%);}
 .pr-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);}
+
+/* Profit calculator */
+.profit-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;}
+.profit-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.profit-card-hd span{font-size:12px;font-weight:700;color:var(--text);}
+.profit-card-hd .pro-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,204,0,.1);color:var(--yellow);border:1px solid rgba(255,204,0,.2);}
+.profit-inputs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+.profit-input-wrap{display:flex;flex-direction:column;gap:3px;}
+.profit-input-wrap label{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;}
+.profit-input-wrap input{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;width:100%;}
+.profit-input-wrap input:focus{border-color:var(--blue);}
+.profit-results{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.profit-stat{background:var(--card2);border-radius:8px;padding:8px;text-align:center;}
+.profit-stat-lbl{font-size:9px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:3px;}
+.profit-stat-val{font-size:15px;font-weight:800;}
+.profit-stat-val.pos{color:var(--green);}
+.profit-stat-val.neg{color:var(--red);}
+.profit-stat-val.neu{color:var(--blue);}
+.profit-locked{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0;}
+.profit-locked i{font-size:28px;color:var(--yellow);}
+.profit-locked p{font-size:12px;color:var(--text2);text-align:center;}
+.profit-locked button{padding:8px 20px;border-radius:8px;background:var(--yellow);color:#0d1117;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+
+/* Share button */
+.share-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--radius);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;background:var(--card2);width:100%;font-family:'Inter',sans-serif;margin-bottom:8px;}
+.share-btn:hover{background:var(--card);color:var(--text);}
+
+/* Listings */
 .sec-hd{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
 .listings-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;}
 .listing{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border2);cursor:pointer;transition:background .1s;}
@@ -157,10 +214,35 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .ebay-link{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:var(--radius);border:1px solid var(--border);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;background:transparent;width:100%;font-family:'Inter',sans-serif;text-decoration:none;transition:all .15s;margin-bottom:4px;}
 .ebay-link:hover{background:rgba(77,159,255,.08);border-color:var(--blue);}
 
-/* Pro modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;}
+/* History page */
+.page-hd{padding:16px 12px 8px;font-size:16px;font-weight:800;color:var(--text);}
+.history-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-bottom:1px solid var(--border2);cursor:pointer;transition:background .1s;}
+.history-item:hover{background:var(--card2);}
+.history-item:first-child{border-top:1px solid var(--border);}
+.history-item i{font-size:16px;color:var(--text3);}
+.history-item-info{flex:1;min-width:0;}
+.history-item-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.history-item-date{font-size:11px;color:var(--text3);}
+.history-empty{padding:40px 20px;text-align:center;color:var(--text3);}
+.history-empty i{font-size:40px;margin-bottom:10px;display:block;}
+.clear-btn{margin:12px;padding:10px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;width:calc(100% - 24px);font-family:'Inter',sans-serif;}
+
+/* Watchlist page */
+.watchlist-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-bottom:1px solid var(--border2);cursor:pointer;}
+.watchlist-item:first-child{border-top:1px solid var(--border);}
+.watchlist-item-info{flex:1;min-width:0;}
+.watchlist-item-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.watchlist-item-price{font-size:11px;color:var(--green);font-weight:600;}
+.watchlist-remove{background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:4px;}
+.watchlist-remove:hover{color:var(--red);}
+.watchlist-empty{padding:40px 20px;text-align:center;color:var(--text3);}
+.watchlist-empty i{font-size:40px;margin-bottom:10px;display:block;}
+.add-watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--radius);border:1px solid var(--border);color:var(--yellow);font-size:12px;font-weight:600;cursor:pointer;background:transparent;width:100%;font-family:'Inter',sans-serif;margin-bottom:8px;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:100;padding:0;}
 .modal-overlay.show{display:flex;}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:340px;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:420px;}
 .modal h3{font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px;}
 .modal p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5;}
 .modal-feature{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2);}
@@ -171,53 +253,40 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 </style>
 </head>
 <body>
+<div id="app">
 
-<!-- ── Login Screen ── -->
+<!-- Login -->
 <div id="login-screen" class="auth-screen">
-  <div class="auth-logo">
-    <div class="logo-dots"><span></span><span></span><span></span><span></span></div>
-    <span class="auth-title">PriceScout</span>
-  </div>
+  <div class="auth-logo"><div class="logo-dots"><span></span><span></span><span></span><span></span></div><span class="auth-title">PriceScout</span></div>
   <div class="auth-card">
-    <h2>Welcome back</h2>
-    <p>Sign in to your account to continue</p>
+    <h2>Welcome back</h2><p>Sign in to your account to continue</p>
     <div class="auth-err" id="login-err"></div>
     <input class="auth-input" type="email" id="login-email" placeholder="Email address"/>
     <input class="auth-input" type="password" id="login-pass" placeholder="Password"/>
     <button class="auth-btn" id="login-btn" onclick="signIn()">Sign in</button>
     <div class="auth-divider"><hr/><span>or</span><hr/></div>
-    <button class="google-btn" onclick="signInGoogle()">
-      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Continue with Google
-    </button>
+    <button class="google-btn" onclick="signInGoogle()"><svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
     <div class="auth-switch">Don't have an account? <a onclick="showRegister()">Sign up free</a></div>
   </div>
 </div>
 
-<!-- ── Register Screen ── -->
+<!-- Register -->
 <div id="register-screen" class="auth-screen" style="display:none">
-  <div class="auth-logo">
-    <div class="logo-dots"><span></span><span></span><span></span><span></span></div>
-    <span class="auth-title">PriceScout</span>
-  </div>
+  <div class="auth-logo"><div class="logo-dots"><span></span><span></span><span></span><span></span></div><span class="auth-title">PriceScout</span></div>
   <div class="auth-card">
-    <h2>Create account</h2>
-    <p>Free plan includes barcode scanning & search</p>
+    <h2>Create account</h2><p>Free plan includes barcode scanning & search</p>
     <div class="auth-err" id="reg-err"></div>
     <input class="auth-input" type="text" id="reg-name" placeholder="Your name"/>
     <input class="auth-input" type="email" id="reg-email" placeholder="Email address"/>
     <input class="auth-input" type="password" id="reg-pass" placeholder="Password (min 6 characters)"/>
     <button class="auth-btn" id="reg-btn" onclick="register()">Create account</button>
     <div class="auth-divider"><hr/><span>or</span><hr/></div>
-    <button class="google-btn" onclick="signInGoogle()">
-      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Continue with Google
-    </button>
+    <button class="google-btn" onclick="signInGoogle()"><svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
     <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
   </div>
 </div>
 
-<!-- ── Main App ── -->
+<!-- Main App -->
 <div id="main-app" class="main-app">
   <header class="hdr">
     <div class="hdr-logo"><span></span><span></span><span></span><span></span></div>
@@ -229,94 +298,125 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
     </div>
   </header>
 
-  <div class="scan-wrap">
-    <div class="vbox">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas-cap"></canvas>
-      <div class="cam-idle" id="cam-idle">
-        <i class="ti ti-barcode" aria-hidden="true"></i>
-        <span>Tap a button below to start</span>
+  <!-- Search page -->
+  <div class="page active" id="page-search">
+    <div class="scan-wrap">
+      <div class="vbox">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas-cap"></canvas>
+        <div class="cam-idle" id="cam-idle"><i class="ti ti-barcode" aria-hidden="true"></i><span>Tap a button below to start</span></div>
+        <div id="photo-prev"><img id="prev-img" alt=""/></div>
       </div>
-      <div id="photo-prev"><img id="prev-img" alt=""/></div>
+      <div class="mode-row">
+        <button class="mbtn" id="bb" onclick="startBarcode()"><i class="ti ti-barcode" aria-hidden="true"></i>Scan barcode</button>
+        <button class="mbtn" id="aib" onclick="startAIPhoto()"><i class="ti ti-brain" aria-hidden="true"></i>AI Scan</button>
+        <button class="mbtn" id="ub" onclick="triggerUpload()"><i class="ti ti-photo-up" aria-hidden="true"></i>Upload image</button>
+      </div>
+      <div id="barcode-reader-div"></div>
+      <input type="file" id="inp-barcode" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodeCapture(event)"/>
+      <input type="file" id="inp-ai" accept="image/*" capture="environment" style="display:none" onchange="handleAIPhoto(event)"/>
+      <input type="file" id="inp-upload" accept="image/*" style="display:none" onchange="handleUpload(event)"/>
+      <div class="search-row">
+        <input type="text" id="q" placeholder="Product name or barcode number…" oninput="showSuggestions()" onblur="hideSuggestions()"/>
+        <button class="go-btn" onclick="doSearch()">Search</button>
+      </div>
     </div>
 
-    <div class="mode-row">
-      <button class="mbtn" id="bb" onclick="startBarcode()">
-        <i class="ti ti-barcode" aria-hidden="true"></i>Scan barcode
-      </button>
-      <button class="mbtn pro-feature" id="aib" onclick="startAIPhoto()">
-        <i class="ti ti-brain" aria-hidden="true"></i>AI Scan
-      </button>
-      <button class="mbtn" id="ub" onclick="triggerUpload()">
-        <i class="ti ti-photo-up" aria-hidden="true"></i>Upload image
-      </button>
+    <div class="suggestions" id="suggestions"></div>
+    <div style="height:10px"></div>
+    <div class="status" id="status"></div>
+    <div class="upgrade-banner" id="upgrade-banner" style="display:none">
+      <span class="ub-text"><strong>Upgrade to Pro</strong> — unlock profit calculator & more</span>
+      <button class="ub-btn" onclick="showProModal()">Upgrade</button>
     </div>
 
-    <div id="barcode-reader-div"></div>
-    <input type="file" id="inp-barcode" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodeCapture(event)"/>
-    <input type="file" id="inp-ai"      accept="image/*" capture="environment" style="display:none" onchange="handleAIPhoto(event)"/>
-    <input type="file" id="inp-upload"  accept="image/*"                       style="display:none" onchange="handleUpload(event)"/>
-
-    <div class="search-row">
-      <input type="text" id="q" placeholder="Product name or barcode number…"/>
-      <button class="go-btn" onclick="doSearch()">Search</button>
-    </div>
-  </div>
-
-  <div style="height:10px"></div>
-  <div class="status" id="status"></div>
-  <div class="upgrade-banner" id="upgrade-banner" style="display:none">
-    <span class="ub-text"><strong>Upgrade to Pro</strong> — unlock AI photo search</span>
-    <button class="ub-btn" onclick="showProModal()">Upgrade</button>
-  </div>
-
-  <div class="results" id="results">
-    <div id="prod-hero" style="display:none;margin-bottom:10px;border-radius:var(--radius);overflow:hidden;background:var(--card);border:1px solid var(--border);">
-      <img id="prod-hero-img" src="" alt="product" style="width:100%;height:200px;object-fit:contain;background:#0d1117;display:block;"/>
-      <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-        <div style="flex:1">
-          <div id="prod-hero-name" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;"></div>
-          <div id="prod-hero-meta" style="font-size:11px;color:var(--text2);"></div>
+    <div class="results" id="results">
+      <div class="prod-hero" id="prod-hero">
+        <img id="prod-hero-img" src="" alt="product"/>
+        <div class="prod-hero-info">
+          <div style="flex:1"><div class="prod-hero-name" id="prod-hero-name"></div><div class="prod-hero-meta" id="prod-hero-meta"></div></div>
+          <button class="confirm-btn" onclick="confirmProduct()">✓ Correct</button>
+          <button class="wrong-btn" onclick="wrongProduct()">✗ Wrong</button>
         </div>
-        <button onclick="confirmProduct()" style="padding:8px 16px;border-radius:8px;background:var(--green);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">✓ Correct item</button>
-        <button onclick="wrongProduct()" style="padding:8px 12px;border-radius:8px;background:var(--card2);color:var(--text2);border:1px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">✗ Wrong</button>
+      </div>
+
+      <div class="prod-stats-wrap" id="prod-stats-wrap">
+        <div class="prod-card" id="prod-card"></div>
+        <div class="stats" id="stats"></div>
+        <div class="price-range" id="price-range"></div>
+
+        <!-- Profit calculator -->
+        <div class="profit-card">
+          <div class="profit-card-hd"><span>💰 Profit Calculator</span><span class="pro-tag">PRO</span></div>
+          <div id="profit-locked">
+            <div class="profit-locked"><i class="ti ti-lock" aria-hidden="true"></i><p>Upgrade to Pro to calculate your profit after eBay fees & postage</p><button onclick="showProModal()">Unlock for £2.99/month</button></div>
+          </div>
+          <div id="profit-unlocked" style="display:none">
+            <div class="profit-inputs">
+              <div class="profit-input-wrap"><label>You paid (£)</label><input type="number" id="paid-price" placeholder="0.00" oninput="calcProfit()"/></div>
+              <div class="profit-input-wrap"><label>Sell price (£)</label><input type="number" id="sell-price" placeholder="0.00" oninput="calcProfit()"/></div>
+              <div class="profit-input-wrap"><label>Postage (£)</label><input type="number" id="postage-cost" placeholder="3.00" oninput="calcProfit()"/></div>
+              <div class="profit-input-wrap"><label>eBay fee %</label><input type="number" id="ebay-fee" value="12.8" oninput="calcProfit()"/></div>
+            </div>
+            <div class="profit-results" id="profit-results"></div>
+          </div>
+        </div>
+
+        <!-- Share button -->
+        <button class="share-btn" onclick="shareResult()"><i class="ti ti-share" aria-hidden="true"></i>Share this price data</button>
+
+        <!-- Add to watchlist -->
+        <button class="add-watch-btn" id="add-watch-btn" onclick="addToWatchlist()"><i class="ti ti-bookmark-plus" aria-hidden="true"></i>Add to watchlist</button>
+
+        <div class="sec-hd">Recent sold listings</div>
+        <div class="listings-wrap" id="listings"></div>
+        <a class="ebay-link" id="ebay-link" href="#" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i>View all sold listings on eBay</a>
       </div>
     </div>
-    <div id="prod-stats-wrap" style="display:none">
-    <div class="prod-card" id="prod-card"></div>
-    <div class="stats" id="stats"></div>
-    <div class="price-range" id="price-range"></div>
-    <div class="sec-hd">Recent sold listings</div>
-    <div class="listings-wrap" id="listings"></div>
-    <a class="ebay-link" id="ebay-link" href="#" target="_blank" rel="noopener">
-      <i class="ti ti-external-link" aria-hidden="true"></i>View all sold listings on eBay
-    </a>
-    </div><!-- end prod-stats-wrap -->
   </div>
+
+  <!-- History page -->
+  <div class="page" id="page-history">
+    <div class="page-hd">Search History</div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- Watchlist page -->
+  <div class="page" id="page-watchlist">
+    <div class="page-hd">Watchlist</div>
+    <div id="watchlist-list"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-search" onclick="switchPage('search')"><i class="ti ti-search" aria-hidden="true"></i>Search</button>
+    <button class="nav-btn" id="nav-history" onclick="switchPage('history')"><i class="ti ti-history" aria-hidden="true"></i>History</button>
+    <button class="nav-btn" id="nav-watchlist" onclick="switchPage('watchlist')"><i class="ti ti-bookmark" aria-hidden="true"></i>Watchlist</button>
+  </nav>
 </div>
 
 <!-- Pro Modal -->
 <div class="modal-overlay" id="pro-modal">
   <div class="modal">
     <h3>Upgrade to Pro ⚡</h3>
-    <p>Unlock powerful features to supercharge your reselling</p>
-    <div class="modal-feature"><i class="ti ti-brain" aria-hidden="true"></i><span>AI photo identification — point at any product</span></div>
+    <p>Supercharge your reselling with powerful features</p>
+    <div class="modal-feature"><i class="ti ti-calculator" aria-hidden="true"></i><span>Profit calculator — see profit after all fees</span></div>
+    <div class="modal-feature"><i class="ti ti-brain" aria-hidden="true"></i><span>AI photo identification</span></div>
     <div class="modal-feature"><i class="ti ti-infinite" aria-hidden="true"></i><span>Unlimited searches per day</span></div>
-    <div class="modal-feature"><i class="ti ti-history" aria-hidden="true"></i><span>Search history saved to your account</span></div>
     <div class="modal-feature"><i class="ti ti-chart-line" aria-hidden="true"></i><span>Price trend charts</span></div>
+    <div class="modal-feature"><i class="ti ti-bell" aria-hidden="true"></i><span>Price alerts & notifications</span></div>
     <p style="text-align:center;font-size:15px;font-weight:800;color:var(--yellow);margin:0 0 16px">Coming soon — £2.99/month</p>
     <button class="modal-close" onclick="closeProModal()">Maybe later</button>
   </div>
 </div>
 
-<!-- Firebase SDKs -->
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
 <script>
-// ── Firebase config ───────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyDD2AdCBmvpzzsSl1ZLEWyHtUzDcb5JJ10",
   authDomain: "pricescout-2e8a3.firebaseapp.com",
@@ -326,136 +426,100 @@ const firebaseConfig = {
   appId: "1:39419517438:web:2f5998509c4d628934c8af",
   measurementId: "G-LMJWEF5V8K"
 };
-
-// ── Anthropic API key (add yours here when ready) ─────────────────────────────
 const API = 'https://compassionate-patience-production-4d82.up.railway.app';
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
-
 const $ = id => document.getElementById(id);
 const fx = (n,c) => (c==='USD'?'$':c==='EUR'?'€':'£') + Number(n).toFixed(2);
 
-let currentUser = null;
-let userPlan = 'free';
+let currentUser = null, userPlan = 'free';
+let currentQuery = '', currentAvgPrice = 0, currentCurrency = 'GBP';
+let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
 
-// ── Auth state ────────────────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
-  if (user) {
-    currentUser = user;
-    await loadUserProfile(user);
-    showMainApp();
-  } else {
-    currentUser = null;
-    showLoginScreen();
-  }
+  if (user) { currentUser = user; await loadUserProfile(user); showMainApp(); loadHistory(); }
+  else { currentUser = null; showLoginScreen(); }
 });
 
 async function loadUserProfile(user) {
   try {
     const doc = await db.collection('users').doc(user.uid).get();
-    if (doc.exists) {
-      userPlan = doc.data().plan || 'free';
-    } else {
-      await db.collection('users').doc(user.uid).set({
-        name: user.displayName || '',
-        email: user.email,
-        plan: 'free',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      userPlan = 'free';
-    }
+    if (doc.exists) { userPlan = doc.data().plan || 'free'; }
+    else { await db.collection('users').doc(user.uid).set({ name: user.displayName||'', email: user.email, plan: 'free', createdAt: firebase.firestore.FieldValue.serverTimestamp() }); userPlan = 'free'; }
   } catch(e) { userPlan = 'free'; }
-
-  const initials = (user.displayName || user.email || '?').charAt(0).toUpperCase();
+  const initials = (user.displayName||user.email||'?').charAt(0).toUpperCase();
   $('user-avatar').textContent = initials;
-  $('plan-badge').textContent = userPlan === 'pro' ? 'PRO' : 'FREE';
-  $('plan-badge').className = 'pro-badge ' + (userPlan === 'pro' ? 'pro' : 'free');
-  $('upgrade-banner').style.display = userPlan === 'pro' ? 'none' : 'flex';
+  $('plan-badge').textContent = userPlan==='pro'?'PRO':'FREE';
+  $('plan-badge').className = 'pro-badge '+(userPlan==='pro'?'pro':'free');
+  $('upgrade-banner').style.display = userPlan==='pro'?'none':'flex';
+  // Show/hide profit calculator
+  $('profit-locked').style.display = userPlan==='pro'?'none':'block';
+  $('profit-unlocked').style.display = userPlan==='pro'?'block':'none';
 }
 
-function showMainApp() {
-  $('login-screen').style.display = 'none';
-  $('register-screen').style.display = 'none';
-  $('main-app').classList.add('show');
-}
-function showLoginScreen() {
-  $('login-screen').style.display = 'flex';
-  $('register-screen').style.display = 'none';
-  $('main-app').classList.remove('show');
-}
-function showRegister() {
-  $('login-screen').style.display = 'none';
-  $('register-screen').style.display = 'flex';
-}
-function showLogin() {
-  $('register-screen').style.display = 'none';
-  $('login-screen').style.display = 'flex';
-}
+function showMainApp() { $('login-screen').style.display='none'; $('register-screen').style.display='none'; $('main-app').classList.add('show'); }
+function showLoginScreen() { $('login-screen').style.display='flex'; $('register-screen').style.display='none'; $('main-app').classList.remove('show'); }
+function showRegister() { $('login-screen').style.display='none'; $('register-screen').style.display='flex'; }
+function showLogin() { $('register-screen').style.display='none'; $('login-screen').style.display='flex'; }
 
-// ── Auth actions ──────────────────────────────────────────────────────────────
 async function signIn() {
-  const email = $('login-email').value.trim();
-  const pass  = $('login-pass').value;
-  const err   = $('login-err');
-  const btn   = $('login-btn');
-  err.classList.remove('show');
-  btn.disabled = true; btn.textContent = 'Signing in…';
-  try {
-    await auth.signInWithEmailAndPassword(email, pass);
-  } catch(e) {
-    err.textContent = 'Incorrect email or password'; err.classList.add('show');
-    btn.disabled = false; btn.textContent = 'Sign in';
-  }
+  const email=$('login-email').value.trim(), pass=$('login-pass').value, err=$('login-err'), btn=$('login-btn');
+  err.classList.remove('show'); btn.disabled=true; btn.textContent='Signing in…';
+  try { await auth.signInWithEmailAndPassword(email,pass); }
+  catch(e) { err.textContent='Incorrect email or password'; err.classList.add('show'); btn.disabled=false; btn.textContent='Sign in'; }
 }
-
 async function register() {
-  const name  = $('reg-name').value.trim();
-  const email = $('reg-email').value.trim();
-  const pass  = $('reg-pass').value;
-  const err   = $('reg-err');
-  const btn   = $('reg-btn');
+  const name=$('reg-name').value.trim(), email=$('reg-email').value.trim(), pass=$('reg-pass').value, err=$('reg-err'), btn=$('reg-btn');
   err.classList.remove('show');
-  if (!name) { err.textContent = 'Please enter your name'; err.classList.add('show'); return; }
-  btn.disabled = true; btn.textContent = 'Creating account…';
-  try {
-    const cred = await auth.createUserWithEmailAndPassword(email, pass);
-    await cred.user.updateProfile({ displayName: name });
-  } catch(e) {
-    err.textContent = e.message || 'Could not create account';
-    err.classList.add('show');
-    btn.disabled = false; btn.textContent = 'Create account';
-  }
+  if(!name){err.textContent='Please enter your name';err.classList.add('show');return;}
+  btn.disabled=true; btn.textContent='Creating account…';
+  try { const cred=await auth.createUserWithEmailAndPassword(email,pass); await cred.user.updateProfile({displayName:name}); }
+  catch(e) { err.textContent=e.message||'Could not create account'; err.classList.add('show'); btn.disabled=false; btn.textContent='Create account'; }
 }
+async function signInGoogle() { try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); } catch(e){} }
+async function signOut() { await auth.signOut(); }
 
-async function signInGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  try { await auth.signInWithPopup(provider); } catch(e) { console.log(e); }
-}
-
-async function signOut() {
-  await auth.signOut();
+// ── Navigation ────────────────────────────────────────────────────────────────
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  $('page-'+page).classList.add('active');
+  $('nav-'+page).classList.add('active');
+  if(page==='history') loadHistory();
+  if(page==='watchlist') renderWatchlist();
 }
 
 // ── Pro modal ─────────────────────────────────────────────────────────────────
 function showProModal() { $('pro-modal').classList.add('show'); }
 function closeProModal() { $('pro-modal').classList.remove('show'); }
 
-// ── Camera / scan functions ───────────────────────────────────────────────────
+// ── Suggestions ───────────────────────────────────────────────────────────────
+const popularSearches = ['iPhone 16','PlayStation 5','Nike Air Max','AirPods Pro','Nintendo Switch','Samsung Galaxy S24','Lego','Dyson Hoover','Supreme','Jordan 1'];
+function showSuggestions() {
+  const q = $('q').value.trim().toLowerCase();
+  if(q.length < 2) { $('suggestions').classList.remove('show'); return; }
+  const matches = popularSearches.filter(s => s.toLowerCase().includes(q)).slice(0,4);
+  // Also show recent searches
+  const recent = JSON.parse(localStorage.getItem('recentSearches')||'[]').filter(s=>s.toLowerCase().includes(q)).slice(0,3);
+  const all = [...new Set([...recent,...matches])].slice(0,5);
+  if(!all.length) { $('suggestions').classList.remove('show'); return; }
+  $('suggestions').innerHTML = all.map(s=>`<div class="suggestion-item" onmousedown="selectSuggestion('${s}')"><i class="ti ti-search" aria-hidden="true"></i>${s}</div>`).join('');
+  $('suggestions').classList.add('show');
+}
+function hideSuggestions() { setTimeout(()=>$('suggestions').classList.remove('show'),200); }
+function selectSuggestion(s) { $('q').value=s; $('suggestions').classList.remove('show'); doSearch(); }
+
+// ── Camera ────────────────────────────────────────────────────────────────────
 function setStatus(msg,type){const el=$('status');el.className='status '+type;el.textContent=msg;}
 function clearStatus(){$('status').className='status';}
 function timeAgo(str){if(!str)return'';const d=Math.floor((Date.now()-new Date(str))/86400000);return d===0?'Today':d===1?'Yesterday':d+' days ago';}
 function showPreview(url){$('cam-idle').style.display='none';$('photo-prev').style.display='block';$('prev-img').src=url;}
 function resetButtons(){['bb','aib','ub'].forEach(id=>$(id).classList.remove('on'));}
-
 function startBarcode(){resetButtons();$('bb').classList.add('on');$('inp-barcode').click();}
-function startPhoto(){resetButtons();$('pb').classList.add('on');$('inp-photo').click();}
+function startAIPhoto(){resetButtons();$('aib').classList.add('on');$('inp-ai').click();}
 function triggerUpload(){resetButtons();$('ub').classList.add('on');$('inp-upload').click();}
-
-function startAIPhoto() {
-  resetButtons(); $('aib').classList.add('on'); $('inp-ai').click();
-}
 
 async function handleBarcodeCapture(e) {
   const file=e.target.files[0];if(!file)return;e.target.value='';
@@ -473,37 +537,26 @@ async function handleBarcodeCapture(e) {
   }
 }
 
-function handlePhotoCapture(e) {
-  const file=e.target.files[0];if(!file)return;e.target.value='';
-  const fr=new FileReader();fr.onload=ev=>{showPreview(ev.target.result);setStatus('Photo captured! Type product name below and tap Search','info');};fr.readAsDataURL(file);
-}
-
-function handleUpload(e) {
-  const file=e.target.files[0];if(!file)return;e.target.value='';
-  const fr=new FileReader();fr.onload=ev=>{showPreview(ev.target.result);setStatus('Image loaded! Type product name below and tap Search','info');};fr.readAsDataURL(file);
-}
-
 async function handleAIPhoto(e) {
   const file=e.target.files[0];if(!file)return;e.target.value='';
   setStatus('AI is identifying the product…','load');
   const fr=new FileReader();
   fr.onload=async ev=>{
     showPreview(ev.target.result);
-    try{
-      const r=await fetch(`${API}/api/identify`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({image:ev.target.result})
-      });
+    try {
+      const r=await fetch(`${API}/api/identify`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:ev.target.result})});
       const data=await r.json();
       if(data.error)throw new Error(data.error);
-      $('q').value=data.name;
-      setStatus('AI identified: '+data.name,'ok');
-      await saveSearch(data.name);
-      fetchSold(data.name,data.category||'General');
+      $('q').value=data.name;setStatus('AI identified: '+data.name,'ok');
+      await saveSearch(data.name);fetchSold(data.name,data.category||'General');
     }catch(err){setStatus('AI identification failed — type product name below','info');}
   };
   fr.readAsDataURL(file);
+}
+
+function handleUpload(e) {
+  const file=e.target.files[0];if(!file)return;e.target.value='';
+  const fr=new FileReader();fr.onload=ev=>{showPreview(ev.target.result);setStatus('Image loaded! Type product name below and tap Search','info');};fr.readAsDataURL(file);
 }
 
 async function lookupBarcode(code) {
@@ -516,21 +569,106 @@ async function lookupBarcode(code) {
   }catch(e){setStatus('Lookup failed — type product name manually','info');}
 }
 
-function doSearch(){
+function doSearch() {
   const q=$('q').value.trim();if(!q){setStatus('Enter a product name or barcode','info');return;}
-  setStatus('Searching eBay sold listings…','load');
+  hideSuggestions();setStatus('Searching eBay sold listings…','load');
   saveSearch(q);fetchSold(q,'General');
+  // Save to recent searches
+  const recent=JSON.parse(localStorage.getItem('recentSearches')||'[]');
+  const updated=[q,...recent.filter(s=>s!==q)].slice(0,20);
+  localStorage.setItem('recentSearches',JSON.stringify(updated));
 }
 
+// ── History ───────────────────────────────────────────────────────────────────
 async function saveSearch(query) {
-  if(!currentUser) return;
-  try {
-    await db.collection('users').doc(currentUser.uid).collection('searches').add({
-      query, timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  } catch(e){}
+  if(!currentUser)return;
+  try { await db.collection('users').doc(currentUser.uid).collection('searches').add({query,timestamp:firebase.firestore.FieldValue.serverTimestamp()}); }
+  catch(e){}
 }
 
+async function loadHistory() {
+  if(!currentUser){$('history-list').innerHTML='<div class="history-empty"><i class="ti ti-history" aria-hidden="true"></i>Sign in to see history</div>';return;}
+  try {
+    const snap=await db.collection('users').doc(currentUser.uid).collection('searches').orderBy('timestamp','desc').limit(50).get();
+    if(snap.empty){$('history-list').innerHTML='<div class="history-empty"><i class="ti ti-history" aria-hidden="true"></i><p>No searches yet</p></div>';return;}
+    const items=snap.docs.map(d=>{
+      const data=d.data();
+      const date=data.timestamp?.toDate();
+      const dateStr=date?timeAgo(date):'';
+      return `<div class="history-item" onclick="searchFromHistory('${data.query.replace(/'/g,"\\'")}')"><i class="ti ti-history" aria-hidden="true"></i><div class="history-item-info"><div class="history-item-name">${data.query}</div><div class="history-item-date">${dateStr}</div></div><i class="ti ti-chevron-right" aria-hidden="true" style="color:var(--text3)"></i></div>`;
+    }).join('');
+    $('history-list').innerHTML=items+`<button class="clear-btn" onclick="clearHistory()"><i class="ti ti-trash" aria-hidden="true"></i> Clear history</button>`;
+  }catch(e){$('history-list').innerHTML='<div class="history-empty">Could not load history</div>';}
+}
+
+function searchFromHistory(query) {
+  $('q').value=query;switchPage('search');
+  setTimeout(()=>fetchSold(query,'General'),100);
+}
+
+async function clearHistory() {
+  if(!currentUser)return;
+  if(!confirm('Clear all search history?'))return;
+  const snap=await db.collection('users').doc(currentUser.uid).collection('searches').get();
+  const batch=db.batch();
+  snap.docs.forEach(d=>batch.delete(d.ref));
+  await batch.commit();
+  loadHistory();
+}
+
+// ── Watchlist ─────────────────────────────────────────────────────────────────
+function addToWatchlist() {
+  if(!currentQuery)return;
+  const item={query:currentQuery,avgPrice:currentAvgPrice,currency:currentCurrency,date:new Date().toISOString()};
+  watchlist=[item,...watchlist.filter(w=>w.query!==currentQuery)].slice(0,50);
+  localStorage.setItem('watchlist',JSON.stringify(watchlist));
+  setStatus(currentQuery+' added to watchlist!','ok');
+  $('add-watch-btn').innerHTML='<i class="ti ti-bookmark-filled" aria-hidden="true"></i> Added to watchlist';
+}
+
+function renderWatchlist() {
+  if(!watchlist.length){$('watchlist-list').innerHTML='<div class="watchlist-empty"><i class="ti ti-bookmark" aria-hidden="true"></i><p>No items in your watchlist yet.<br>Search for a product and tap "Add to watchlist".</p></div>';return;}
+  $('watchlist-list').innerHTML=watchlist.map((w,i)=>`
+    <div class="watchlist-item">
+      <i class="ti ti-tag" aria-hidden="true" style="color:var(--text3)"></i>
+      <div class="watchlist-item-info" onclick="searchFromHistory('${w.query.replace(/'/g,"\\'")}')">
+        <div class="watchlist-item-name">${w.query}</div>
+        <div class="watchlist-item-price">Avg ${w.currency==='USD'?'$':w.currency==='EUR'?'€':'£'}${w.avgPrice.toFixed(2)} when saved</div>
+      </div>
+      <button class="watchlist-remove" onclick="removeFromWatchlist(${i})"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>`).join('');
+}
+
+function removeFromWatchlist(i) {
+  watchlist.splice(i,1);
+  localStorage.setItem('watchlist',JSON.stringify(watchlist));
+  renderWatchlist();
+}
+
+// ── Profit calculator ─────────────────────────────────────────────────────────
+function calcProfit() {
+  const paid=parseFloat($('paid-price').value)||0;
+  const sell=parseFloat($('sell-price').value)||0;
+  const postage=parseFloat($('postage-cost').value)||0;
+  const feePct=parseFloat($('ebay-fee').value)||12.8;
+  const ebayFee=sell*(feePct/100);
+  const profit=sell-paid-postage-ebayFee;
+  const roi=paid>0?((profit/paid)*100):0;
+  $('profit-results').innerHTML=`
+    <div class="profit-stat"><div class="profit-stat-lbl">eBay fee</div><div class="profit-stat-val neu">£${ebayFee.toFixed(2)}</div></div>
+    <div class="profit-stat"><div class="profit-stat-lbl">Profit</div><div class="profit-stat-val ${profit>=0?'pos':'neg'}">£${profit.toFixed(2)}</div></div>
+    <div class="profit-stat"><div class="profit-stat-lbl">ROI</div><div class="profit-stat-val ${roi>=0?'pos':'neg'}">${roi.toFixed(0)}%</div></div>`;
+}
+
+// ── Share ─────────────────────────────────────────────────────────────────────
+function shareResult() {
+  if(!currentQuery)return;
+  const text=`${currentQuery} — avg sold price £${currentAvgPrice.toFixed(2)} on eBay (last 30 days) via PriceScout`;
+  if(navigator.share){navigator.share({title:'PriceScout',text,url:$('ebay-link').href});}
+  else{navigator.clipboard.writeText(text).then(()=>setStatus('Copied to clipboard!','ok'));}
+}
+
+// ── eBay fetch ────────────────────────────────────────────────────────────────
 async function fetchSold(query,category) {
   try {
     const r=await fetch(`${API}/api/ebay/sold?q=${encodeURIComponent(query)}&limit=20`);
@@ -539,38 +677,35 @@ async function fetchSold(query,category) {
   }catch(e){setStatus('eBay lookup failed: '+e.message,'err');}
 }
 
-let pendingResultData = null;
-
+// ── Confirm/wrong product ─────────────────────────────────────────────────────
 function confirmProduct() {
-  $('prod-hero').style.display = 'none';
-  $('prod-stats-wrap').style.display = 'block';
+  $('prod-hero').style.display='none';
+  $('prod-stats-wrap').style.display='block';
+  // Pre-fill sell price with avg
+  if($('sell-price')) $('sell-price').value=currentAvgPrice.toFixed(2);
   $('prod-stats-wrap').scrollIntoView({behavior:'smooth',block:'start'});
 }
-
 function wrongProduct() {
-  $('prod-hero').style.display = 'none';
+  $('prod-hero').style.display='none';
   $('results').classList.remove('on');
-  $('q').value = '';
+  $('q').value='';
   setStatus('Try scanning again or type the product name below','info');
-  $('q').focus();
 }
 
+// ── Render ────────────────────────────────────────────────────────────────────
 function renderResults(data,query,category) {
   const{stats,listings,totalSold}=data;
   const cur=listings[0]?.currency||'GBP';
   const img=listings.find(l=>l.imageUrl)?.imageUrl||'';
+  currentQuery=query; currentAvgPrice=stats.avg; currentCurrency=cur;
 
-  // Show hero image confirmation first
-  if(img) {
-    $('prod-hero-img').src = img;
-    $('prod-hero-img').onerror = () => { $('prod-hero-img').style.display='none'; };
-  } else {
-    $('prod-hero-img').style.display = 'none';
-  }
-  $('prod-hero-name').textContent = query;
-  $('prod-hero-meta').textContent = `${category} · ${totalSold} sold in last 30 days`;
-  $('prod-hero').style.display = 'block';
-  $('prod-stats-wrap').style.display = 'none';
+  // Hero confirmation
+  if(img){$('prod-hero-img').src=img;$('prod-hero-img').onerror=()=>{$('prod-hero-img').style.display='none';};}
+  else{$('prod-hero-img').style.display='none';}
+  $('prod-hero-name').textContent=query;
+  $('prod-hero-meta').textContent=`${category} · ${totalSold} sold in last 30 days`;
+  $('prod-hero').style.display='block';
+  $('prod-stats-wrap').style.display='none';
 
   $('prod-card').innerHTML=`
     ${img?`<img class="prod-thumb" src="${img}" alt="product" onerror="this.style.display='none'">`:`<div class="prod-thumb-ph"><i class="ti ti-tag" aria-hidden="true"></i></div>`}
@@ -588,6 +723,9 @@ function renderResults(data,query,category) {
     <div class="pr-track"><div class="pr-fill"><div class="pr-marker" style="left:${pct}%"></div></div></div>
     <div class="pr-ends"><span>${fx(stats.low,cur)}</span><span>${fx(stats.high,cur)}</span></div>`;
 
+  // Reset watchlist button
+  $('add-watch-btn').innerHTML='<i class="ti ti-bookmark-plus" aria-hidden="true"></i> Add to watchlist';
+
   $('listings').innerHTML=listings.slice(0,12).map((l,i)=>`
     <div class="listing" onclick="window.open('${l.url}','_blank')">
       <span class="l-rank">${i+1}</span>
@@ -598,8 +736,7 @@ function renderResults(data,query,category) {
     </div>`).join('');
 
   $('ebay-link').href=`https://www.ebay.co.uk/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
-  $('results').classList.add('on');
-  clearStatus();
+  $('results').classList.add('on');clearStatus();
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
