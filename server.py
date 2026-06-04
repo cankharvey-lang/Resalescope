@@ -10,11 +10,12 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder='public')
 CORS(app)
 
-RAPIDAPI_KEY      = os.getenv('RAPIDAPI_KEY', 'ad18cc42aamshcf9a7059a2cf7b0p1a5cc2jsn47199c0efcc3')
+RAPIDAPI_KEY      = os.getenv('RAPIDAPI_KEY', '')
 ANTHROPIC_KEY     = os.getenv('ANTHROPIC_KEY', '')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_PRICE_ID   = os.getenv('STRIPE_PRICE_ID', 'price_1TeY0HHzkJINbfejP0vlCO98')
+EBAY_APP_ID       = os.getenv('EBAY_APP_ID', 'HarveyCa-PriceSco-PRD-88b00c500-2ca7bf20')
 PORT              = int(os.getenv('PORT', 8080))
 
 # ── Vinted session cookie cache ───────────────────────────────────────────────
@@ -42,7 +43,13 @@ def parse_price(val):
         return 0.0
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'anthropic': bool(ANTHROPIC_KEY), 'rapidapi': bool(RAPIDAPI_KEY), 'stripe': bool(STRIPE_SECRET_KEY)})
+    return jsonify({
+        'status':    'ok',
+        'anthropic': bool(ANTHROPIC_KEY),
+        'rapidapi':  bool(RAPIDAPI_KEY),
+        'stripe':    bool(STRIPE_SECRET_KEY),
+        'ebay':      bool(EBAY_APP_ID),
+    })
 
 # ── Stripe: create checkout session ──────────────────────────────────────────
 @app.route('/api/stripe/checkout', methods=['POST'])
@@ -244,7 +251,7 @@ def ebay_sold():
         params = {
             'OPERATION-NAME': 'findCompletedItems',
             'SERVICE-VERSION': '1.0.0',
-            'SECURITY-APPNAME': 'HarveyCa-PriceSco-PRD-88b00c500-2ca7bf20',
+            'SECURITY-APPNAME': EBAY_APP_ID,
             'RESPONSE-DATA-FORMAT': 'JSON',
             'keywords': query,
             'itemFilter(0).name': 'SoldItemsOnly',
