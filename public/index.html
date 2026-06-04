@@ -239,7 +239,51 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .watchlist-empty i{font-size:40px;margin-bottom:10px;display:block;}
 .add-watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--radius);border:1px solid var(--border);color:var(--yellow);font-size:12px;font-weight:600;cursor:pointer;background:transparent;width:100%;font-family:'Inter',sans-serif;margin-bottom:8px;}
 
-/* Modal */
+/* Notification bell */
+.bell-btn{position:relative;background:none;border:none;cursor:pointer;padding:4px;color:var(--text2);}
+.bell-btn i{font-size:20px;}
+.bell-dot{position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--card);display:none;}
+.bell-dot.show{display:block;}
+
+/* Notifications panel */
+.notif-panel{position:fixed;top:0;right:0;width:100%;max-width:420px;height:100vh;background:var(--bg);z-index:50;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;}
+.notif-panel.open{transform:translateX(0);}
+.notif-hdr{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--card);border-bottom:1px solid var(--border);}
+.notif-hdr h2{font-size:16px;font-weight:700;color:var(--text);flex:1;}
+.notif-back{background:none;border:none;cursor:pointer;color:var(--text2);font-size:20px;padding:2px;}
+.notif-body{flex:1;overflow-y:auto;padding-bottom:20px;}
+.notif-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border2);background:var(--card);margin-bottom:1px;}
+.notif-item.unread{background:rgba(77,159,255,.05);border-left:3px solid var(--blue);}
+.notif-icon{width:36px;height:36px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.notif-icon i{font-size:18px;}
+.notif-info{flex:1;min-width:0;}
+.notif-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.notif-body-text{font-size:12px;color:var(--text2);line-height:1.4;}
+.notif-time{font-size:10px;color:var(--text3);margin-top:3px;}
+.notif-empty{padding:60px 20px;text-align:center;color:var(--text3);}
+.notif-empty i{font-size:48px;margin-bottom:12px;display:block;opacity:.3;}
+.notif-empty p{font-size:13px;}
+
+/* Set alert button */
+.set-alert-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--radius);border:1px solid rgba(255,204,0,.3);color:var(--yellow);font-size:12px;font-weight:600;cursor:pointer;background:rgba(255,204,0,.05);width:100%;font-family:'Inter',sans-serif;margin-bottom:8px;}
+
+/* Alert modal */
+.alert-modal{background:var(--card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:420px;}
+.alert-modal h3{font-size:16px;font-weight:700;margin-bottom:6px;}
+.alert-modal p{font-size:12px;color:var(--text2);margin-bottom:16px;}
+.alert-input-row{display:flex;gap:8px;margin-bottom:16px;align-items:flex-end;}
+.alert-input-wrap{flex:1;}
+.alert-input-wrap label{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px;}
+.alert-input-wrap input{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;}
+.alert-input-wrap input:focus{border-color:var(--blue);}
+.alert-save-btn{padding:10px 18px;border-radius:8px;background:var(--blue);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
+.active-alerts{margin-bottom:12px;}
+.active-alert-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border2);}
+.active-alert-item:last-child{border-bottom:none;}
+.active-alert-name{flex:1;font-size:12px;color:var(--text);}
+.active-alert-price{font-size:12px;font-weight:700;color:var(--yellow);}
+.active-alert-remove{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;}
+
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:100;padding:0;}
 .modal-overlay.show{display:flex;}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:420px;}
@@ -293,6 +337,10 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
     <span class="app-name">PriceScout</span>
     <div class="hdr-right">
       <span class="pro-badge free" id="plan-badge">FREE</span>
+      <button class="bell-btn" onclick="openNotifications()" aria-label="Notifications">
+        <i class="ti ti-bell" aria-hidden="true"></i>
+        <span class="bell-dot" id="bell-dot"></span>
+      </button>
       <div class="avatar" id="user-avatar">?</div>
       <button class="signout-btn" onclick="signOut()">Sign out</button>
     </div>
@@ -365,6 +413,9 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
         <!-- Share button -->
         <button class="share-btn" onclick="shareResult()"><i class="ti ti-share" aria-hidden="true"></i>Share this price data</button>
 
+        <!-- Price alert -->
+        <button class="set-alert-btn" onclick="openAlertModal()"><i class="ti ti-bell-plus" aria-hidden="true"></i>Set a price alert for this item</button>
+
         <!-- Add to watchlist -->
         <button class="add-watch-btn" id="add-watch-btn" onclick="addToWatchlist()"><i class="ti ti-bookmark-plus" aria-hidden="true"></i>Add to watchlist</button>
 
@@ -393,6 +444,33 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
     <button class="nav-btn" id="nav-history" onclick="switchPage('history')"><i class="ti ti-history" aria-hidden="true"></i>History</button>
     <button class="nav-btn" id="nav-watchlist" onclick="switchPage('watchlist')"><i class="ti ti-bookmark" aria-hidden="true"></i>Watchlist</button>
   </nav>
+</div>
+
+<!-- Notifications panel -->
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-hdr">
+    <button class="notif-back" onclick="closeNotifications()"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+    <h2>Notifications</h2>
+    <button onclick="markAllRead()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--blue);font-family:'Inter',sans-serif;font-weight:600;">Mark all read</button>
+  </div>
+  <div class="notif-body" id="notif-body"></div>
+</div>
+
+<!-- Alert modal -->
+<div class="modal-overlay" id="alert-modal">
+  <div class="alert-modal">
+    <h3>🔔 Set price alert</h3>
+    <p id="alert-modal-desc">Get notified when this item sells below your target price</p>
+    <div class="active-alerts" id="active-alerts-list"></div>
+    <div class="alert-input-row">
+      <div class="alert-input-wrap">
+        <label>Target price (£)</label>
+        <input type="number" id="alert-price-input" placeholder="e.g. 150.00"/>
+      </div>
+      <button class="alert-save-btn" onclick="saveAlert()">Set alert</button>
+    </div>
+    <button class="modal-close" onclick="closeAlertModal()">Cancel</button>
+  </div>
 </div>
 
 <!-- Pro Modal -->
@@ -736,9 +814,131 @@ function renderResults(data,query,category) {
     </div>`).join('');
 
   $('ebay-link').href=`https://www.ebay.co.uk/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
+  checkAlerts(listings);
   $('results').classList.add('on');clearStatus();
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
+
+// ── Notifications & Price Alerts ──────────────────────────────────────────────
+let alerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
+let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+
+function openNotifications() {
+  renderNotifications();
+  $('notif-panel').classList.add('open');
+}
+function closeNotifications() {
+  $('notif-panel').classList.remove('open');
+}
+
+function renderNotifications() {
+  if (!notifications.length) {
+    $('notif-body').innerHTML = `<div class="notif-empty"><i class="ti ti-bell-off" aria-hidden="true"></i><p>No notifications yet.<br>Set a price alert to get started!</p></div>`;
+    return;
+  }
+  $('notif-body').innerHTML = notifications.map((n, i) => `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="readNotif(${i})">
+      <div class="notif-icon"><i class="ti ti-${n.icon || 'bell'}" style="color:${n.color || 'var(--blue)'}"></i></div>
+      <div class="notif-info">
+        <div class="notif-title">${n.title}</div>
+        <div class="notif-body-text">${n.body}</div>
+        <div class="notif-time">${timeAgo(n.date) || 'Just now'}</div>
+      </div>
+    </div>`).join('');
+}
+
+function readNotif(i) {
+  notifications[i].read = true;
+  localStorage.setItem('notifications', JSON.stringify(notifications));
+  updateBellDot();
+  renderNotifications();
+}
+
+function markAllRead() {
+  notifications = notifications.map(n => ({...n, read: true}));
+  localStorage.setItem('notifications', JSON.stringify(notifications));
+  updateBellDot();
+  renderNotifications();
+}
+
+function addNotification(title, body, icon='bell', color='var(--blue)') {
+  notifications.unshift({ title, body, icon, color, date: new Date().toISOString(), read: false });
+  notifications = notifications.slice(0, 50);
+  localStorage.setItem('notifications', JSON.stringify(notifications));
+  updateBellDot();
+}
+
+function updateBellDot() {
+  const unread = notifications.filter(n => !n.read).length;
+  $('bell-dot').className = 'bell-dot' + (unread > 0 ? ' show' : '');
+}
+
+// ── Price alerts ──────────────────────────────────────────────────────────────
+function openAlertModal() {
+  if (!currentQuery) return;
+  $('alert-modal-desc').textContent = `Notify me when "${currentQuery}" sells below:`;
+  // Show existing alerts for this product
+  const existing = alerts.filter(a => a.query === currentQuery);
+  $('active-alerts-list').innerHTML = existing.length
+    ? `<div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Active alerts</div>` +
+      existing.map((a, i) => `
+        <div class="active-alert-item">
+          <span class="active-alert-name">${a.query}</span>
+          <span class="active-alert-price">under £${a.targetPrice.toFixed(2)}</span>
+          <button class="active-alert-remove" onclick="removeAlert('${a.id}')"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>`).join('')
+    : '';
+  $('alert-price-input').value = currentAvgPrice > 0 ? (currentAvgPrice * 0.9).toFixed(2) : '';
+  $('alert-modal').classList.add('show');
+}
+
+function closeAlertModal() { $('alert-modal').classList.remove('show'); }
+
+function saveAlert() {
+  const price = parseFloat($('alert-price-input').value);
+  if (!price || price <= 0) { setStatus('Please enter a valid target price', 'info'); return; }
+  const alert = {
+    id: Date.now().toString(),
+    query: currentQuery,
+    targetPrice: price,
+    createdAt: new Date().toISOString(),
+    triggered: false
+  };
+  alerts = [alert, ...alerts];
+  localStorage.setItem('priceAlerts', JSON.stringify(alerts));
+  closeAlertModal();
+  setStatus(`Alert set! You'll be notified when ${currentQuery} sells under £${price.toFixed(2)}`, 'ok');
+  addNotification('Price alert set! 🔔', `We'll watch "${currentQuery}" and notify you when it sells under £${price.toFixed(2)}`, 'bell', 'var(--yellow)');
+}
+
+function removeAlert(id) {
+  alerts = alerts.filter(a => a.id !== id);
+  localStorage.setItem('priceAlerts', JSON.stringify(alerts));
+  openAlertModal(); // refresh modal
+}
+
+// Check alerts when new results come in
+function checkAlerts(listings) {
+  if (!alerts.length) return;
+  listings.forEach(listing => {
+    alerts.forEach(alert => {
+      if (alert.triggered) return;
+      if (listing.title.toLowerCase().includes(alert.query.toLowerCase().split(' ')[0]) &&
+          listing.price > 0 && listing.price <= alert.targetPrice) {
+        alert.triggered = true;
+        addNotification(
+          `Price alert! 🎯 ${alert.query}`,
+          `Just sold for £${listing.price.toFixed(2)} — below your £${alert.targetPrice.toFixed(2)} target!`,
+          'tag', 'var(--green)'
+        );
+      }
+    });
+  });
+  localStorage.setItem('priceAlerts', JSON.stringify(alerts));
+}
+
+// Init bell dot on load
+setTimeout(updateBellDot, 500);
 
 $('q').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
 $('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')signIn();});
