@@ -399,11 +399,11 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
     </div>
 
     <div class="suggestions" id="suggestions"></div>
-    <div id="search-counter" class="search-counter ok" style="display:none"></div>
+    <div id="search-counter" class="search-counter ok"></div>
     <div style="height:6px"></div>
     <div class="status" id="status"></div>
     <div class="upgrade-banner" id="upgrade-banner" style="display:none">
-      <span class="ub-text"><strong>Upgrade to Pro</strong> — unlock profit calculator & more</span>
+      <span class="ub-text"><strong>Upgrade to Pro</strong> — unlock AI Scan, profit calculator & unlimited searches</span>
       <button class="ub-btn" onclick="showProModal()">Upgrade</button>
     </div>
 
@@ -466,7 +466,7 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
         </div>
 
         <div id="vinted-panel" style="display:none">
-          <div class="listings-wrap" id="vinted-listings"><div class="vinted-empty"><i class="ti ti-loader" aria-hidden="true"></i><br/>Loading Vinted listings…</div></div>
+          <div class="listings-wrap" id="vinted-listings"><div class="vinted-empty">Tap to load Vinted listings</div></div>
           <a class="ebay-link" id="vinted-link" href="#" target="_blank" rel="noopener" style="border-color:#09b66d;color:#09b66d;"><i class="ti ti-external-link" aria-hidden="true"></i>View all on Vinted</a>
         </div>
       </div>
@@ -729,10 +729,10 @@ function updateSearchCounter() {
   if (userPlan === 'pro') { el.style.display = 'none'; return; }
   el.style.display = 'flex';
   el.innerHTML = remaining > 3
-    ? `<i class="ti ti-search" aria-hidden="true"></i> ${remaining} free searches left today`
+    ? `<i class="ti ti-search" aria-hidden="true"></i> ${remaining} of ${FREE_DAILY_LIMIT} free searches remaining today`
     : remaining > 0
-    ? `<i class="ti ti-alert-triangle" aria-hidden="true"></i> Only ${remaining} free search${remaining===1?'':'es'} left today`
-    : `<i class="ti ti-lock" aria-hidden="true"></i> Daily limit reached — <a onclick="showProModal()" style="color:var(--yellow);cursor:pointer;font-weight:700;">upgrade to Pro</a>`;
+    ? `<i class="ti ti-alert-triangle" aria-hidden="true"></i> Only ${remaining} free search${remaining===1?'':'es'} left today — <a onclick="showProModal()" style="color:var(--yellow);cursor:pointer;font-weight:700;margin-left:3px">upgrade for unlimited</a>`
+    : `<i class="ti ti-lock" aria-hidden="true"></i> Daily limit reached — <a onclick="showProModal()" style="color:var(--yellow);cursor:pointer;font-weight:700;margin-left:3px">upgrade to Pro</a>`;
   el.className = 'search-counter ' + (remaining > 3 ? 'ok' : remaining > 0 ? 'warn' : 'limit');
 }
 
