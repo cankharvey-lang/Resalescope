@@ -530,7 +530,8 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
     <div class="modal-feature"><i class="ti ti-infinite" aria-hidden="true"></i><span>Unlimited searches per day</span></div>
     <div class="modal-feature"><i class="ti ti-chart-line" aria-hidden="true"></i><span>Price trend charts</span></div>
     <div class="modal-feature"><i class="ti ti-bell" aria-hidden="true"></i><span>Price alerts & notifications</span></div>
-    <p style="text-align:center;font-size:15px;font-weight:800;color:var(--yellow);margin:0 0 16px">Coming soon — £2.99/month</p>
+    <p style="text-align:center;font-size:13px;color:var(--text2);margin:0 0 12px">Cancel anytime · Secure payment via Stripe</p>
+    <button id="upgrade-pay-btn" onclick="startUpgrade()" style="width:100%;padding:13px;border-radius:10px;background:var(--yellow);color:#0d1117;border:none;font-size:15px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px;">Upgrade — £2.99/month</button>
     <button class="modal-close" onclick="closeProModal()">Maybe later</button>
   </div>
 </div>
@@ -966,7 +967,49 @@ function renderVintedListings(data, query) {
     </div>`).join('');
 }
 
-// ── Notifications & Price Alerts ──────────────────────────────────────────────
+// ── Stripe upgrade ────────────────────────────────────────────────────────────
+const STRIPE_PK = 'pk_test_51TeXybHzkJINbfejGMm3beEuC1aOSzcHElFP4990phGetffFrVgB0C2gYtICmXJBzopfcDAZwakrhHWrn84cI22300RC5Vm1j6';
+
+async function startUpgrade() {
+  if (!currentUser) { showLoginScreen(); return; }
+  const btn = $('upgrade-pay-btn');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  try {
+    const r = await fetch(`${API}/api/stripe/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId:     currentUser.uid,
+        email:      currentUser.email,
+        successUrl: window.location.origin + '?upgraded=true',
+        cancelUrl:  window.location.origin + '?cancelled=true',
+      })
+    });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    window.location.href = data.url;
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Upgrade — £2.99/month';
+    setStatus('Could not start checkout: ' + e.message, 'err');
+  }
+}
+
+// Handle return from Stripe
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('upgraded') === 'true') {
+    setTimeout(() => {
+      addNotification('Welcome to Pro! 🎉', 'Your account has been upgraded. Enjoy unlimited searches and all Pro features!', 'crown', 'var(--yellow)');
+      setStatus('Welcome to Pro! All features are now unlocked 🎉', 'ok');
+    }, 2000);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+  if (params.get('cancelled') === 'true') {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+});
 let alerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
 let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
 
