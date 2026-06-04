@@ -239,6 +239,13 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .watchlist-empty i{font-size:40px;margin-bottom:10px;display:block;}
 .add-watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--radius);border:1px solid var(--border);color:var(--yellow);font-size:12px;font-weight:600;cursor:pointer;background:transparent;width:100%;font-family:'Inter',sans-serif;margin-bottom:8px;}
 
+/* Search counter */
+.search-counter{display:flex;align-items:center;gap:6px;margin:0 12px 8px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:500;}
+.search-counter.ok{background:rgba(63,185,80,.08);color:var(--green);border:1px solid rgba(63,185,80,.2);}
+.search-counter.warn{background:rgba(255,204,0,.08);color:var(--yellow);border:1px solid rgba(255,204,0,.2);}
+.search-counter.limit{background:rgba(255,77,77,.08);color:var(--red);border:1px solid rgba(255,77,77,.2);}
+.search-counter i{font-size:14px;}
+
 /* Notification bell */
 .bell-btn{position:relative;background:none;border:none;cursor:pointer;padding:4px;color:var(--text2);}
 .bell-btn i{font-size:20px;}
@@ -371,7 +378,8 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
     </div>
 
     <div class="suggestions" id="suggestions"></div>
-    <div style="height:10px"></div>
+    <div id="search-counter" class="search-counter ok" style="display:none"></div>
+    <div style="height:6px"></div>
     <div class="status" id="status"></div>
     <div class="upgrade-banner" id="upgrade-banner" style="display:none">
       <span class="ub-text"><strong>Upgrade to Pro</strong> — unlock profit calculator & more</span>
@@ -638,7 +646,9 @@ function handleUpload(e) {
 }
 
 async function lookupBarcode(code) {
+  if (!canSearch()) { setStatus('Daily limit reached — upgrade to Pro for unlimited searches!','err'); showProModal(); return; }
   setStatus('Looking up barcode…','load');
+  incrementSearchCount();
   try {
     const r=await fetch(`${API}/api/barcode/${encodeURIComponent(code)}`);
     const data=await r.json();const name=data.name||code;$('q').value=name;
@@ -647,11 +657,53 @@ async function lookupBarcode(code) {
   }catch(e){setStatus('Lookup failed — type product name manually','info');}
 }
 
+// ── Search limit ──────────────────────────────────────────────────────────────
+const FREE_DAILY_LIMIT = 10;
+
+function getSearchCount() {
+  const today = new Date().toDateString();
+  const stored = JSON.parse(localStorage.getItem('searchCount') || '{"date":"","count":0}');
+  if (stored.date !== today) return 0;
+  return stored.count;
+}
+
+function incrementSearchCount() {
+  const today = new Date().toDateString();
+  const count = getSearchCount() + 1;
+  localStorage.setItem('searchCount', JSON.stringify({date: today, count}));
+  updateSearchCounter();
+}
+
+function canSearch() {
+  if (userPlan === 'pro') return true;
+  return getSearchCount() < FREE_DAILY_LIMIT;
+}
+
+function updateSearchCounter() {
+  const count = getSearchCount();
+  const remaining = FREE_DAILY_LIMIT - count;
+  const el = $('search-counter');
+  if (!el) return;
+  if (userPlan === 'pro') { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = remaining > 3
+    ? `<i class="ti ti-search" aria-hidden="true"></i> ${remaining} free searches left today`
+    : remaining > 0
+    ? `<i class="ti ti-alert-triangle" aria-hidden="true"></i> Only ${remaining} free search${remaining===1?'':'es'} left today`
+    : `<i class="ti ti-lock" aria-hidden="true"></i> Daily limit reached — <a onclick="showProModal()" style="color:var(--yellow);cursor:pointer;font-weight:700;">upgrade to Pro</a>`;
+  el.className = 'search-counter ' + (remaining > 3 ? 'ok' : remaining > 0 ? 'warn' : 'limit');
+}
+
 function doSearch() {
   const q=$('q').value.trim();if(!q){setStatus('Enter a product name or barcode','info');return;}
+  if (!canSearch()) {
+    setStatus('Daily limit reached — upgrade to Pro for unlimited searches!','err');
+    showProModal();
+    return;
+  }
   hideSuggestions();setStatus('Searching eBay sold listings…','load');
+  incrementSearchCount();
   saveSearch(q);fetchSold(q,'General');
-  // Save to recent searches
   const recent=JSON.parse(localStorage.getItem('recentSearches')||'[]');
   const updated=[q,...recent.filter(s=>s!==q)].slice(0,20);
   localStorage.setItem('recentSearches',JSON.stringify(updated));
@@ -937,8 +989,8 @@ function checkAlerts(listings) {
   localStorage.setItem('priceAlerts', JSON.stringify(alerts));
 }
 
-// Init bell dot on load
-setTimeout(updateBellDot, 500);
+// Init bell dot and search counter on load
+setTimeout(() => { updateBellDot(); updateSearchCounter(); }, 500);
 
 $('q').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
 $('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')signIn();});
