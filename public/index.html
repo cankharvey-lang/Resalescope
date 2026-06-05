@@ -571,8 +571,16 @@ let currentUser = null, userPlan = 'free';
 let currentQuery = '', currentAvgPrice = 0, currentCurrency = 'GBP';
 let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
-auth.onAuthStateChanged(async user => {
+// Handle Google redirect result (for WebView/mobile)
+auth.getRedirectResult().then(result => {
+  if (result && result.user) {
+    console.log('Redirect sign-in successful');
+  }
+}).catch(e => {
+  console.log('Redirect result error:', e);
+});
+
+// Auth state
   if (user) { currentUser = user; await loadUserProfile(user); showMainApp(); loadHistory(); }
   else { currentUser = null; showLoginScreen(); }
 });
@@ -614,7 +622,24 @@ async function register() {
   try { const cred=await auth.createUserWithEmailAndPassword(email,pass); await cred.user.updateProfile({displayName:name}); }
   catch(e) { err.textContent=e.message||'Could not create account'; err.classList.add('show'); btn.disabled=false; btn.textContent='Create account'; }
 }
-async function signInGoogle() { try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); } catch(e){} }
+async function signInGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try {
+    // Use redirect for WebView/mobile apps, popup for web
+    const isWebView = /(wv|gonative|median)/i.test(navigator.userAgent) || 
+                      (window.Android !== undefined) ||
+                      document.referrer.includes('android-app://');
+    if (isWebView) {
+      await auth.signInWithRedirect(provider);
+    } else {
+      await auth.signInWithPopup(provider);
+    }
+  } catch(e) {
+    console.log('Google sign-in error:', e);
+    // Show helpful message
+    setStatus('Google sign-in unavailable in app — please use email/password', 'info');
+  }
+}
 async function signOut() { await auth.signOut(); }
 
 // ── Navigation ────────────────────────────────────────────────────────────────
