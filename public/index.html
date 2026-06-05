@@ -336,7 +336,21 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
     <input class="auth-input" type="email" id="login-email" placeholder="Email address"/>
     <input class="auth-input" type="password" id="login-pass" placeholder="Password"/>
     <button class="auth-btn" id="login-btn" onclick="signIn()">Sign in</button>
+    <div style="text-align:center;margin-bottom:12px;"><a onclick="showForgotPassword()" style="font-size:12px;color:var(--text2);cursor:pointer;">Forgot your password?</a></div>
     <div class="auth-switch">Don't have an account? <a onclick="showRegister()">Sign up free</a></div>
+  </div>
+</div>
+
+<!-- Forgot Password -->
+<div id="forgot-screen" class="auth-screen" style="display:none">
+  <div class="auth-logo"><div class="logo-dots"><span></span><span></span><span></span><span></span></div><span class="auth-title">PriceScout</span></div>
+  <div class="auth-card">
+    <h2>Reset password</h2><p>Enter your email and we'll send you a reset link</p>
+    <div class="auth-err" id="forgot-err"></div>
+    <div id="forgot-success" style="background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.2);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;display:none;">Reset email sent! Check your inbox.</div>
+    <input class="auth-input" type="email" id="forgot-email" placeholder="Email address"/>
+    <button class="auth-btn" id="forgot-btn" onclick="sendPasswordReset()">Send reset link</button>
+    <div class="auth-switch"><a onclick="showLogin()" style="color:var(--text2);">← Back to sign in</a></div>
   </div>
 </div>
 
@@ -599,9 +613,33 @@ async function loadUserProfile(user) {
 }
 
 function showMainApp() { $('login-screen').style.display='none'; $('register-screen').style.display='none'; $('main-app').classList.add('show'); }
-function showLoginScreen() { $('login-screen').style.display='flex'; $('register-screen').style.display='none'; $('main-app').classList.remove('show'); }
+function showLoginScreen() { $('login-screen').style.display='flex'; $('register-screen').style.display='none'; $('forgot-screen').style.display='none'; $('main-app').classList.remove('show'); }
 function showRegister() { $('login-screen').style.display='none'; $('register-screen').style.display='flex'; }
-function showLogin() { $('register-screen').style.display='none'; $('login-screen').style.display='flex'; }
+function showLogin() { $('register-screen').style.display='none'; $('forgot-screen').style.display='none'; $('login-screen').style.display='flex'; }
+
+function showForgotPassword() {
+  $('login-screen').style.display='none';
+  $('forgot-screen').style.display='flex';
+  $('forgot-err').classList.remove('show');
+  $('forgot-success').style.display='none';
+}
+
+async function sendPasswordReset() {
+  const email=$('forgot-email').value.trim();
+  const err=$('forgot-err'), btn=$('forgot-btn');
+  err.classList.remove('show');
+  if(!email){err.textContent='Please enter your email';err.classList.add('show');return;}
+  btn.disabled=true;btn.textContent='Sending…';
+  try {
+    await auth.sendPasswordResetEmail(email);
+    $('forgot-success').style.display='block';
+    btn.textContent='Sent! ✓';
+  } catch(e) {
+    err.textContent=e.code==='auth/user-not-found'?'No account found with that email':'Could not send reset email';
+    err.classList.add('show');
+    btn.disabled=false;btn.textContent='Send reset link';
+  }
+}
 
 async function signIn() {
   const email=$('login-email').value.trim(), pass=$('login-pass').value, err=$('login-err'), btn=$('login-btn');
@@ -944,7 +982,7 @@ function switchPlatform(platform) {
   $('tab-' + platform).classList.add('active');
   $('ebay-panel').style.display   = platform === 'ebay'   ? 'block' : 'none';
   $('vinted-panel').style.display = platform === 'vinted' ? 'block' : 'none';
-  if (platform === 'vinted' && $('vinted-listings').innerHTML.includes('Loading')) {
+  if (platform === 'vinted' && !$('vinted-listings').innerHTML.includes('vinted-listing')) {
     fetchVinted(currentQuery);
   }
 }
