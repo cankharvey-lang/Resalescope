@@ -172,6 +172,19 @@ def privacy():
 @app.route('/terms')
 def terms():
     return send_from_directory('public', 'terms-of-service.html')
+
+@app.route('/delete-account')
+def delete_account():
+    return send_from_directory('public', 'delete-account.html')
+
+@app.route('/api/delete-request', methods=['POST'])
+def delete_request():
+    body = request.get_json() or {}
+    email = body.get('email', '')
+    reason = body.get('reason', '')
+    print(f'DELETION REQUEST — email: {email}, reason: {reason}')
+    # In production you would email yourself or log to a database
+    return jsonify({'received': True})
 @app.route('/api/ebay/sold')
 def ebay_sold():
     query = request.args.get('q', '').strip()
