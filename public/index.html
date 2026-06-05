@@ -894,7 +894,7 @@ function renderResults(data,query,category) {
   $('tab-vinted').classList.remove('active');
   $('ebay-panel').style.display='block';
   $('vinted-panel').style.display='none';
-  $('vinted-listings').innerHTML='<div class="vinted-empty"><i class="ti ti-loader" aria-hidden="true"></i><br/>Loading Vinted listings…</div>';
+  $('vinted-listings').innerHTML='<div class="vinted-empty">Tap to load Vinted listings</div>';
 
   // Hero confirmation
   if(img){$('prod-hero-img').src=img;$('prod-hero-img').onerror=()=>{$('prod-hero-img').style.display='none';};}
