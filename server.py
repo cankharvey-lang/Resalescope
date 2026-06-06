@@ -5,11 +5,9 @@ import os, json, requests, base64 as b64lib, time, threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from flask_compress import Compress
 
 app = Flask(__name__, static_folder='public')
 CORS(app)
-Compress(app)  # gzip compression on all responses
 
 RAPIDAPI_KEY      = os.getenv('RAPIDAPI_KEY', '')
 ANTHROPIC_KEY     = os.getenv('ANTHROPIC_KEY', '')
