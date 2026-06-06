@@ -260,6 +260,15 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .watchlist-empty i{font-size:40px;margin-bottom:10px;display:block;}
 .add-watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--radius);border:1px solid var(--border);color:var(--yellow);font-size:12px;font-weight:600;cursor:pointer;background:transparent;width:100%;font-family:'Inter',sans-serif;margin-bottom:8px;}
 
+/* Loading skeleton */
+.skeleton{background:linear-gradient(90deg,var(--card2) 25%,var(--border) 50%,var(--card2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.loading-dots{display:flex;gap:6px;align-items:center;justify-content:center;padding:20px;}
+.loading-dots span{width:8px;height:8px;border-radius:50%;background:var(--blue);animation:bounce 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:.2s;}
+.loading-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-10px)}}
+
 /* Search counter */
 .search-counter{display:flex;align-items:center;gap:6px;margin:0 12px 8px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:500;}
 .search-counter.ok{background:rgba(63,185,80,.08);color:var(--green);border:1px solid rgba(63,185,80,.2);}
@@ -899,11 +908,22 @@ function shareResult() {
 
 // ── eBay fetch ────────────────────────────────────────────────────────────────
 async function fetchSold(query,category) {
+  // Show skeleton immediately so app feels fast
+  $('results').classList.add('on');
+  $('prod-hero').style.display='none';
+  $('prod-stats-wrap').style.display='block';
+  $('prod-card').innerHTML=`<div class="skeleton" style="width:56px;height:56px;border-radius:8px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px;"><div class="skeleton" style="height:16px;width:70%"></div><div class="skeleton" style="height:12px;width:40%"></div></div>`;
+  $('stats').innerHTML=`<div class="stat"><div class="skeleton" style="height:60px"></div></div><div class="stat"><div class="skeleton" style="height:60px"></div></div><div class="stat"><div class="skeleton" style="height:60px"></div></div><div class="stat"><div class="skeleton" style="height:60px"></div></div>`;
+  $('listings').innerHTML=`<div class="loading-dots"><span></span><span></span><span></span></div>`;
+  $('results').scrollIntoView({behavior:'smooth',block:'start'});
   try {
     const r=await fetch(`${API}/api/ebay/sold?q=${encodeURIComponent(query)}&limit=20`);
     const data=await r.json();if(data.error)throw new Error(data.error);
     renderResults(data,query,category);
-  }catch(e){setStatus('eBay lookup failed: '+e.message,'err');}
+  }catch(e){
+    $('results').classList.remove('on');
+    setStatus('eBay lookup failed: '+e.message,'err');
+  }
 }
 
 // ── Confirm/wrong product ─────────────────────────────────────────────────────
