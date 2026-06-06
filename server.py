@@ -1,14 +1,15 @@
 """
-PriceScout — Python Backend
-Uses RapidAPI eBay Average Selling Price API (POST)
-Returns avg, min, max and individual listings
+PriceScout — Python Backend (Optimised)
 """
-import os, json, requests, base64 as b64lib
+import os, json, requests, base64 as b64lib, time, threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from flask_compress import Compress
 
 app = Flask(__name__, static_folder='public')
 CORS(app)
+Compress(app)  # gzip compression on all responses
 
 RAPIDAPI_KEY      = os.getenv('RAPIDAPI_KEY', '')
 ANTHROPIC_KEY     = os.getenv('ANTHROPIC_KEY', '')
@@ -18,24 +19,51 @@ STRIPE_PRICE_ID   = os.getenv('STRIPE_PRICE_ID', 'price_1TeY0HHzkJINbfejP0vlCO98
 EBAY_APP_ID       = os.getenv('EBAY_APP_ID', 'HarveyCa-PriceSco-PRD-88b00c500-2ca7bf20')
 PORT              = int(os.getenv('PORT', 8080))
 
-# ── Vinted session cookie cache ───────────────────────────────────────────────
+# ── Search cache ──────────────────────────────────────────────────────────────
+_cache = {}
+CACHE_TTL = 3600  # 1 hour
+
+def cache_get(key):
+    if key in _cache:
+        data, ts = _cache[key]
+        if time.time() - ts < CACHE_TTL:
+            return data
+        del _cache[key]
+    return None
+
+def cache_set(key, data):
+    _cache[key] = (data, time.time())
+    if len(_cache) > 200:
+        oldest = min(_cache.keys(), key=lambda k: _cache[k][1])
+        del _cache[oldest]
+
+# ── Vinted session cookie ─────────────────────────────────────────────────────
 _vinted_cookie = None
+_vinted_cookie_ts = 0
+VINTED_COOKIE_TTL = 1800  # 30 min
 
 def get_vinted_cookie():
-    global _vinted_cookie
+    global _vinted_cookie, _vinted_cookie_ts
+    if _vinted_cookie and time.time() - _vinted_cookie_ts < VINTED_COOKIE_TTL:
+        return _vinted_cookie
     try:
         r = requests.get(
             'https://www.vinted.co.uk',
-            headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'},
-            timeout=10, allow_redirects=True
+            headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'},
+            timeout=8, allow_redirects=True
         )
         cookies = r.cookies.get_dict()
         if cookies:
             _vinted_cookie = '; '.join([f'{k}={v}' for k, v in cookies.items()])
+            _vinted_cookie_ts = time.time()
             return _vinted_cookie
     except Exception as e:
-        print(f'Vinted cookie fetch error: {e}')
+        print(f'Vinted cookie error: {e}')
     return None
+
+# Pre-fetch Vinted cookie on startup in background
+threading.Thread(target=get_vinted_cookie, daemon=True).start()
+
 def parse_price(val):
     try:
         return round(float(str(val).replace('£','').replace('$','').replace(',','').strip()), 2)
