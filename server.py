@@ -313,6 +313,10 @@ def ebay_sold():
             'GLOBAL-ID': 'EBAY-GB',
         }
         r = requests.get('https://svcs.ebay.com/services/search/FindingService/v1', params=params, timeout=10)
+        print(f'eBay fallback status: {r.status_code}, length: {len(r.text)}, content: {r.text[:200]}')
+        if not r.text.strip():
+            print('eBay returned empty response')
+            raise Exception('Empty response from eBay')
         data = r.json()
         raw = data.get('findCompletedItemsResponse', [{}])[0]
         ack = raw.get('ack', [''])[0]
