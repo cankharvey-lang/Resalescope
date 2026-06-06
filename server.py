@@ -185,12 +185,39 @@ def delete_request():
     print(f'DELETION REQUEST — email: {email}, reason: {reason}')
     # In production you would email yourself or log to a database
     return jsonify({'received': True})
+# ── Search cache (reduces API calls) ─────────────────────────────────────────
+import time
+_cache = {}
+CACHE_TTL = 3600  # cache results for 1 hour
+
+def cache_get(key):
+    if key in _cache:
+        data, ts = _cache[key]
+        if time.time() - ts < CACHE_TTL:
+            print(f'Cache hit: {key}')
+            return data
+        del _cache[key]
+    return None
+
+def cache_set(key, data):
+    _cache[key] = (data, time.time())
+    # Keep cache small — remove oldest if over 100 entries
+    if len(_cache) > 100:
+        oldest = min(_cache.keys(), key=lambda k: _cache[k][1])
+        del _cache[oldest]
+
 @app.route('/api/ebay/sold')
 def ebay_sold():
     query = request.args.get('q', '').strip()
     limit = min(int(request.args.get('limit', 20)), 100)
     if not query:
         return jsonify({'error': 'q parameter required'}), 400
+
+    # Check cache first
+    cache_key = query.lower().strip()
+    cached = cache_get(cache_key)
+    if cached:
+        return jsonify(cached)
     headers = {
         'x-rapidapi-key':  RAPIDAPI_KEY,
         'x-rapidapi-host': 'ebay-average-selling-price.p.rapidapi.com',
@@ -250,7 +277,7 @@ def ebay_sold():
         if total == 0:
             total = len(listings)
         median = item_prices[len(item_prices)//2] if item_prices else avg
-        return jsonify({
+        result = {
             'query':     query,
             'totalSold': total,
             'listings':  listings,
@@ -261,7 +288,9 @@ def ebay_sold():
                 'high':   high,
                 'median': median,
             }
-        })
+        }
+        cache_set(cache_key, result)
+        return jsonify(result)
     except Exception as e:
         print(f'RapidAPI error: {e} — trying eBay Finding API fallback')
 
@@ -306,13 +335,15 @@ def ebay_sold():
             prices = sorted([l['price'] for l in listings if l['price'] > 0])
             avg = round(sum(prices)/len(prices), 2) if prices else 0
             total = int(raw.get('paginationOutput', [{}])[0].get('totalEntries', [len(listings)])[0])
-            return jsonify({
+            result = {
                 'query': query, 'totalSold': total, 'listings': listings,
                 'stats': {'count': len(listings), 'avg': avg,
                           'low': prices[0] if prices else 0,
                           'high': prices[-1] if prices else 0,
                           'median': prices[len(prices)//2] if prices else 0}
-            })
+            }
+            cache_set(cache_key, result)
+            return jsonify(result)
     except Exception as e2:
         print(f'eBay fallback error: {e2}')
 
