@@ -351,7 +351,7 @@ def ebay_sold():
     except Exception as e2:
         print(f'eBay fallback error: {e2}')
 
-    return jsonify({'error': 'Could not fetch eBay data. Please try again shortly.'}), 502
+    return jsonify({'error': 'Search limit reached for today. Please try again tomorrow or upgrade to Pro for priority access.'}), 502
 @app.route('/api/identify', methods=['POST'])
 def identify():
     body = request.get_json() or {}
