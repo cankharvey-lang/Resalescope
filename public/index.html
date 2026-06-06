@@ -4,9 +4,23 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>PriceScout</title>
+<meta name="description" content="Scan barcodes to instantly see eBay sold prices and Vinted listings. The UK's smartest reselling price checker."/>
+<meta name="theme-color" content="#0d1117"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="PriceScout"/>
+<meta property="og:title" content="PriceScout — eBay & Vinted Price Checker"/>
+<meta property="og:description" content="Scan barcodes to instantly see eBay sold prices and Vinted listings."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://compassionate-patience-production-4d82.up.railway.app"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="PriceScout"/>
+<meta name="twitter:description" content="The UK's smartest reselling price checker"/>
+<title>PriceScout — eBay & Vinted Price Checker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/></noscript>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
 <style>
 :root{
@@ -39,13 +53,6 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
 .auth-input::placeholder{color:var(--text3);}
 .auth-btn{width:100%;padding:11px;border-radius:8px;background:var(--blue);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px;transition:background .15s;}
 .auth-btn:hover{background:#2d87f0;}
-.auth-btn:disabled{opacity:0.5;cursor:not-allowed;}
-.google-btn{width:100%;padding:11px;border-radius:8px;background:var(--card2);color:var(--text);border:1px solid var(--border);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;transition:background .15s;}
-.google-btn:hover{background:var(--card);}
-.google-icon{width:18px;height:18px;}
-.auth-divider{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-.auth-divider hr{flex:1;border:none;border-top:1px solid var(--border);}
-.auth-divider span{font-size:12px;color:var(--text3);}
 .auth-switch{text-align:center;font-size:13px;color:var(--text2);}
 .auth-switch a{color:var(--blue);cursor:pointer;text-decoration:none;font-weight:500;}
 .auth-err{background:rgba(255,77,77,.1);color:var(--red);border:1px solid rgba(255,77,77,.2);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;display:none;}
@@ -513,9 +520,13 @@ body{font-family:'Inter',sans-serif;display:flex;justify-content:center;}
   <!-- Legal links -->
   <div style="text-align:center;padding:8px;position:fixed;bottom:60px;width:100%;max-width:420px;left:50%;transform:translateX(-50%);pointer-events:none;">
     <span style="font-size:10px;color:var(--text3);pointer-events:all;">
-      <a href="/privacy" target="_blank" style="color:var(--text3);text-decoration:none;">Privacy Policy</a>
+      <a href="/privacy" target="_blank" style="color:var(--text3);text-decoration:none;">Privacy</a>
       &nbsp;·&nbsp;
-      <a href="/terms" target="_blank" style="color:var(--text3);text-decoration:none;">Terms of Service</a>
+      <a href="/terms" target="_blank" style="color:var(--text3);text-decoration:none;">Terms</a>
+      &nbsp;·&nbsp;
+      <a href="/delete-account" target="_blank" style="color:var(--text3);text-decoration:none;">Delete account</a>
+      &nbsp;·&nbsp;
+      <span id="app-version-label">v1.0.0</span>
     </span>
   </div>
 </div>
@@ -590,15 +601,8 @@ let currentUser = null, userPlan = 'free';
 let currentQuery = '', currentAvgPrice = 0, currentCurrency = 'GBP';
 let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
 
-// Handle Google redirect result
-auth.getRedirectResult().then(result => {
-  if (result && result.user) console.log('Redirect sign-in successful');
-}).catch(e => console.log('Redirect result:', e));
-
 // ── Auth ──────────────────────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
-
-// Auth state
   if (user) { currentUser = user; await loadUserProfile(user); showMainApp(); loadHistory(); }
   else { currentUser = null; showLoginScreen(); }
 });
@@ -663,15 +667,6 @@ async function register() {
   btn.disabled=true; btn.textContent='Creating account…';
   try { const cred=await auth.createUserWithEmailAndPassword(email,pass); await cred.user.updateProfile({displayName:name}); }
   catch(e) { err.textContent=e.message||'Could not create account'; err.classList.add('show'); btn.disabled=false; btn.textContent='Create account'; }
-}
-async function signInGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  try {
-    await auth.signInWithPopup(provider);
-  } catch(e) {
-    console.log('Google sign-in error:', e);
-    setStatus('Google sign-in unavailable — please use email & password instead', 'info');
-  }
 }
 async function signOut() { await auth.signOut(); }
 
@@ -865,7 +860,14 @@ function addToWatchlist() {
 }
 
 function renderWatchlist() {
-  if(!watchlist.length){$('watchlist-list').innerHTML='<div class="watchlist-empty"><i class="ti ti-bookmark" aria-hidden="true"></i><p>No items in your watchlist yet.<br>Search for a product and tap "Add to watchlist".</p></div>';return;}
+  if(!watchlist.length){
+    $('watchlist-list').innerHTML=`<div class="watchlist-empty">
+      <i class="ti ti-bookmark" aria-hidden="true"></i>
+      <p>Your watchlist is empty</p>
+      <p style="font-size:12px;margin-top:6px;">Search for a product and tap<br>"Add to watchlist" to save it here</p>
+    </div>`;
+    return;
+  }
   $('watchlist-list').innerHTML=watchlist.map((w,i)=>`
     <div class="watchlist-item">
       <i class="ti ti-tag" aria-hidden="true" style="color:var(--text3)"></i>
@@ -930,8 +932,11 @@ async function fetchSold(query,category) {
 function confirmProduct() {
   $('prod-hero').style.display='none';
   $('prod-stats-wrap').style.display='block';
-  // Pre-fill sell price with avg
-  if($('sell-price')) $('sell-price').value=currentAvgPrice.toFixed(2);
+  // Only pre-fill sell price if empty
+  if($('sell-price') && !$('sell-price').value) {
+    $('sell-price').value=currentAvgPrice.toFixed(2);
+    calcProfit();
+  }
   $('prod-stats-wrap').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function wrongProduct() {
@@ -1206,6 +1211,24 @@ function checkAlerts(listings) {
 
 // Init bell dot and search counter on load
 setTimeout(() => { updateBellDot(); updateSearchCounter(); }, 500);
+
+// ── App version ───────────────────────────────────────────────────────────────
+const APP_VERSION = '1.0.0';
+
+// ── Offline detection ─────────────────────────────────────────────────────────
+window.addEventListener('online',  () => clearStatus());
+window.addEventListener('offline', () => setStatus('No internet connection — some features may not work', 'err'));
+
+// ── Pull to refresh ───────────────────────────────────────────────────────────
+let touchStartY = 0;
+document.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, {passive:true});
+document.addEventListener('touchend', e => {
+  const diff = e.changedTouches[0].clientY - touchStartY;
+  if (diff > 80 && window.scrollY === 0 && currentQuery) {
+    setStatus('Refreshing…', 'load');
+    fetchSold(currentQuery, 'General');
+  }
+}, {passive:true});
 
 $('q').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
 $('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')signIn();});
